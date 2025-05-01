@@ -1,3 +1,4 @@
+
 "use client";
 
 import type { DateRange } from "react-day-picker";
@@ -10,14 +11,14 @@ import {
   differenceInYears,
   format,
   subDays,
+  isValid, // Import isValid
 } from "date-fns";
 import { z } from "zod";
 import { useForm, type SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { CalendarIcon, Minus, Plus } from "lucide-react";
+import { Minus, Plus } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
 import {
   Card,
   CardContent,
@@ -34,25 +35,34 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
+import { DateInput } from "@/components/ui/date-input"; // Import the new component
 
 // Schema for Date Difference Form
 const dateDifferenceSchema = z.object({
-  startDate: z.date({ required_error: "Start date is required." }),
-  endDate: z.date({ required_error: "End date is required." }),
+  startDate: z.date({
+    required_error: "Start date is required.",
+    invalid_type_error: "Invalid date format.",
+   }).refine(isValid, { message: "Invalid date." }), // Add refine for better validation
+  endDate: z.date({
+    required_error: "End date is required.",
+    invalid_type_error: "Invalid date format.",
+   }).refine(isValid, { message: "Invalid date." }), // Add refine for better validation
+}).refine(data => !data.startDate || !data.endDate || data.endDate >= data.startDate, {
+    message: "End date must be on or after start date.",
+    path: ["endDate"], // Attach error to endDate field
 });
+
 
 type DateDifferenceValues = z.infer<typeof dateDifferenceSchema>;
 
 // Schema for Date Arithmetic Form
 const dateArithmeticSchema = z.object({
-  baseDate: z.date({ required_error: "A date is required." }),
+  baseDate: z.date({
+    required_error: "A date is required.",
+    invalid_type_error: "Invalid date format.",
+   }).refine(isValid, { message: "Invalid date." }), // Add refine for better validation
   days: z.coerce
     .number({ invalid_type_error: "Must be a number." })
     .int("Must be an integer.")
@@ -93,6 +103,10 @@ export default function Home() {
   // Date Difference Form
   const dateDifferenceForm = useForm<DateDifferenceValues>({
     resolver: zodResolver(dateDifferenceSchema),
+    defaultValues: {
+      startDate: undefined, // Initialize dates as undefined
+      endDate: undefined,
+    }
   });
 
   // Date Arithmetic Form
@@ -100,6 +114,7 @@ export default function Home() {
     resolver: zodResolver(dateArithmeticSchema),
     defaultValues: {
       operation: "add", // Default operation
+      baseDate: undefined, // Initialize date as undefined
     },
   });
 
@@ -108,14 +123,13 @@ export default function Home() {
     data
   ) => {
     const { startDate, endDate } = data;
-    if (startDate && endDate) {
-      const days = differenceInDays(endDate, startDate);
-      const weeks = differenceInWeeks(endDate, startDate);
-      const months = differenceInMonths(endDate, startDate);
-      const years = differenceInYears(endDate, startDate);
-      setDateDifferenceResult({ days, weeks, months, years });
-      setArithmeticResult(null); // Clear other result
-    }
+    // Form validation ensures dates are valid here
+    const days = differenceInDays(endDate, startDate);
+    const weeks = differenceInWeeks(endDate, startDate);
+    const months = differenceInMonths(endDate, startDate);
+    const years = differenceInYears(endDate, startDate);
+    setDateDifferenceResult({ days, weeks, months, years });
+    setArithmeticResult(null); // Clear other result
   };
 
   const handleDateArithmeticSubmit = (operation: "add" | "subtract") => {
@@ -123,14 +137,14 @@ export default function Home() {
     setArithmeticOperation(operation);
     dateArithmeticForm.handleSubmit((data) => {
       const { baseDate, days } = data;
-      if (baseDate && days) {
-        const resultDate =
-          operation === "add"
-            ? addDays(baseDate, days)
-            : subDays(baseDate, days);
-        setArithmeticResult(resultDate);
-        setDateDifferenceResult(null); // Clear other result
-      }
+       // Form validation ensures date and days are valid
+      const resultDate =
+        operation === "add"
+          ? addDays(baseDate, days)
+          : subDays(baseDate, days);
+      setArithmeticResult(resultDate);
+      setDateDifferenceResult(null); // Clear other result
+
     })(); // Trigger validation and submission
   };
 
@@ -139,8 +153,8 @@ export default function Home() {
     setDateDifferenceResult(null);
     setArithmeticResult(null);
     setArithmeticOperation(null);
-    dateDifferenceForm.reset();
-    dateArithmeticForm.reset({ operation: "add" }); // Reset with default operation
+    dateDifferenceForm.reset({ startDate: undefined, endDate: undefined});
+    dateArithmeticForm.reset({ operation: "add", baseDate: undefined, days: undefined }); // Reset with default operation
   };
 
   return (
@@ -177,35 +191,17 @@ export default function Home() {
                       render={({ field }) => (
                         <FormItem className="flex flex-col">
                           <FormLabel>Start Date</FormLabel>
-                          <Popover>
-                            <PopoverTrigger asChild>
-                              <FormControl>
-                                <Button
-                                  variant={"outline"}
-                                  className={cn(
-                                    "w-full justify-start text-left font-normal",
-                                    !field.value && "text-muted-foreground"
-                                  )}
-                                >
-                                  <CalendarIcon className="mr-2 h-4 w-4" />
-                                  {field.value ? (
-                                    format(field.value, "PPP")
-                                  ) : (
-                                    <span>Pick a date</span>
-                                  )}
-                                </Button>
-                              </FormControl>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-auto p-0" align="start">
-                              <Calendar
-                                mode="single"
-                                selected={field.value}
-                                onSelect={field.onChange}
-                                disabled={(date) => date > new Date() || date < new Date("1900-01-01")}
-                                initialFocus
+                           <FormControl>
+                             <DateInput
+                                value={field.value}
+                                onChange={field.onChange}
+                                calendarProps={{
+                                    disabled: (date) =>
+                                      date > new Date() || date < new Date("1900-01-01"),
+                                }}
+                                placeholder="mm/dd/yyyy"
                               />
-                            </PopoverContent>
-                          </Popover>
+                           </FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
@@ -216,37 +212,17 @@ export default function Home() {
                       render={({ field }) => (
                         <FormItem className="flex flex-col">
                           <FormLabel>End Date</FormLabel>
-                          <Popover>
-                            <PopoverTrigger asChild>
-                              <FormControl>
-                                <Button
-                                  variant={"outline"}
-                                  className={cn(
-                                    "w-full justify-start text-left font-normal",
-                                    !field.value && "text-muted-foreground"
-                                  )}
-                                >
-                                  <CalendarIcon className="mr-2 h-4 w-4" />
-                                  {field.value ? (
-                                    format(field.value, "PPP")
-                                  ) : (
-                                    <span>Pick a date</span>
-                                  )}
-                                </Button>
-                              </FormControl>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-auto p-0" align="start">
-                              <Calendar
-                                mode="single"
-                                selected={field.value}
-                                onSelect={field.onChange}
-                                disabled={(date) =>
-                                  date < (dateDifferenceForm.getValues("startDate") || new Date("1900-01-01"))
-                                }
-                                initialFocus
+                          <FormControl>
+                              <DateInput
+                                  value={field.value}
+                                  onChange={field.onChange}
+                                  calendarProps={{
+                                      disabled: (date) =>
+                                      date < (dateDifferenceForm.getValues("startDate") || new Date("1900-01-01")) || date > new Date(), // Also disable future dates
+                                  }}
+                                  placeholder="mm/dd/yyyy"
                               />
-                            </PopoverContent>
-                          </Popover>
+                           </FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
@@ -288,35 +264,17 @@ export default function Home() {
                         render={({ field }) => (
                           <FormItem className="flex flex-col">
                             <FormLabel>Date</FormLabel>
-                            <Popover>
-                              <PopoverTrigger asChild>
-                                <FormControl>
-                                  <Button
-                                    variant={"outline"}
-                                    className={cn(
-                                      "w-full justify-start text-left font-normal",
-                                      !field.value && "text-muted-foreground"
-                                    )}
-                                  >
-                                    <CalendarIcon className="mr-2 h-4 w-4" />
-                                    {field.value ? (
-                                      format(field.value, "PPP")
-                                    ) : (
-                                      <span>Pick a date</span>
-                                    )}
-                                  </Button>
-                                </FormControl>
-                              </PopoverTrigger>
-                              <PopoverContent className="w-auto p-0" align="start">
-                                <Calendar
-                                  mode="single"
-                                  selected={field.value}
-                                  onSelect={field.onChange}
-                                   disabled={(date) => date < new Date("1900-01-01")}
-                                  initialFocus
+                             <FormControl>
+                                <DateInput
+                                    value={field.value}
+                                    onChange={field.onChange}
+                                    calendarProps={{
+                                        disabled: (date) =>
+                                          date < new Date("1900-01-01") || date > new Date(), // Also disable future dates
+                                    }}
+                                    placeholder="mm/dd/yyyy"
                                 />
-                              </PopoverContent>
-                            </Popover>
+                             </FormControl>
                             <FormMessage />
                           </FormItem>
                         )}
@@ -328,7 +286,7 @@ export default function Home() {
                           <FormItem>
                             <FormLabel>Number of Days</FormLabel>
                             <FormControl>
-                              <Input type="number" placeholder="Enter number of days" {...field} min="1" step="1" />
+                              <Input type="number" placeholder="Enter number of days" {...field} onChange={e => field.onChange(e.target.value === '' ? undefined : +e.target.value)} min="1" step="1" />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -342,6 +300,7 @@ export default function Home() {
                       type="button" // Important: Change type to button
                       onClick={() => handleDateArithmeticSubmit("add")}
                       className="w-full bg-accent hover:bg-accent/90"
+                       disabled={!dateArithmeticForm.formState.isValid} // Disable if form invalid
                     >
                       <Plus className="mr-2 h-4 w-4" /> Add Days
                     </Button>
@@ -350,6 +309,7 @@ export default function Home() {
                       onClick={() => handleDateArithmeticSubmit("subtract")}
                       variant="outline"
                       className="w-full border-accent text-accent hover:bg-accent/10"
+                      disabled={!dateArithmeticForm.formState.isValid} // Disable if form invalid
                     >
                       <Minus className="mr-2 h-4 w-4" /> Subtract Days
                     </Button>
