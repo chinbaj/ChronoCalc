@@ -16,7 +16,7 @@ import {
 import { z } from "zod";
 import { useForm, type SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Minus, Plus } from "lucide-react";
+import { CalendarDays } from "lucide-react"; // Use a relevant icon
 
 import { Button } from "@/components/ui/button";
 import {
@@ -35,23 +35,30 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"; // Import Select components
 import { cn } from "@/lib/utils";
-import { DateInput } from "@/components/ui/date-input"; // Import the new component
-import { Separator } from "@/components/ui/separator"; // Import Separator
+import { DateInput } from "@/components/ui/date-input";
+import { Separator } from "@/components/ui/separator";
 
 // Schema for Date Difference Form
 const dateDifferenceSchema = z.object({
   startDate: z.date({
     required_error: "Start date is required.",
     invalid_type_error: "Invalid date format.",
-   }).refine(isValid, { message: "Invalid date." }), // Add refine for better validation
+   }).refine(isValid, { message: "Invalid date." }),
   endDate: z.date({
     required_error: "End date is required.",
     invalid_type_error: "Invalid date format.",
-   }).refine(isValid, { message: "Invalid date." }), // Add refine for better validation
+   }).refine(isValid, { message: "Invalid date." }),
 }).refine(data => !data.startDate || !data.endDate || data.endDate >= data.startDate, {
     message: "End date must be on or after start date.",
-    path: ["endDate"], // Attach error to endDate field
+    path: ["endDate"],
 });
 
 
@@ -62,12 +69,14 @@ const dateArithmeticSchema = z.object({
   baseDate: z.date({
     required_error: "A date is required.",
     invalid_type_error: "Invalid date format.",
-   }).refine(isValid, { message: "Invalid date." }), // Add refine for better validation
+   }).refine(isValid, { message: "Invalid date." }),
+  operation: z.enum(["add", "subtract"], {
+    required_error: "Operation is required.",
+  }), // Added operation to schema
   days: z.coerce
     .number({ invalid_type_error: "Must be a number." })
     .int("Must be an integer.")
     .min(1, "Must be at least 1 day."),
-  operation: z.enum(["add", "subtract"]),
 });
 
 type DateArithmeticValues = z.infer<typeof dateArithmeticSchema>;
@@ -104,7 +113,7 @@ export default function Home() {
   const dateDifferenceForm = useForm<DateDifferenceValues>({
     resolver: zodResolver(dateDifferenceSchema),
     defaultValues: {
-      startDate: undefined, // Initialize dates as undefined
+      startDate: undefined,
       endDate: undefined,
     }
   });
@@ -114,7 +123,7 @@ export default function Home() {
     resolver: zodResolver(dateArithmeticSchema),
     defaultValues: {
       operation: "add", // Default operation
-      baseDate: undefined, // Initialize date as undefined
+      baseDate: undefined,
       days: undefined,
     },
   });
@@ -124,34 +133,27 @@ export default function Home() {
     data
   ) => {
     const { startDate, endDate } = data;
-    // Form validation ensures dates are valid here
     const days = differenceInDays(endDate, startDate);
     const weeks = differenceInWeeks(endDate, startDate);
     const months = differenceInMonths(endDate, startDate);
     const years = differenceInYears(endDate, startDate);
     setDateDifferenceResult({ days, weeks, months, years });
-    setArithmeticResult(null); // Clear other result
+    setArithmeticResult(null);
     setArithmeticOperation(null);
-     // Optionally reset the other form
-    // dateArithmeticForm.reset({ operation: "add", baseDate: undefined, days: undefined });
   };
 
-  const handleDateArithmeticSubmit = (operation: "add" | "subtract") => {
-    dateArithmeticForm.setValue("operation", operation); // Set operation before trigger
-    setArithmeticOperation(operation);
-    dateArithmeticForm.handleSubmit((data) => {
-      const { baseDate, days } = data;
-       // Form validation ensures date and days are valid
-      const resultDate =
-        operation === "add"
-          ? addDays(baseDate, days)
-          : subDays(baseDate, days);
-      setArithmeticResult(resultDate);
-      setDateDifferenceResult(null); // Clear other result
-      // Optionally reset the other form
-      // dateDifferenceForm.reset({ startDate: undefined, endDate: undefined });
-
-    })(); // Trigger validation and submission
+  // Updated handler for Date Arithmetic form submission
+  const handleDateArithmeticSubmit: SubmitHandler<DateArithmeticValues> = (
+    data
+  ) => {
+    const { baseDate, days, operation } = data;
+    const resultDate =
+      operation === "add"
+        ? addDays(baseDate, days)
+        : subDays(baseDate, days);
+    setArithmeticResult(resultDate);
+    setArithmeticOperation(operation); // Set the operation type for display
+    setDateDifferenceResult(null); // Clear other result
   };
 
 
@@ -249,11 +251,10 @@ export default function Home() {
              <h3 className="text-xl font-semibold mb-4 text-center">Date Arithmetic</h3>
               <Form {...dateArithmeticForm}>
                 <form
-                  // We don't use onSubmit here directly, buttons trigger specific handlers
+                  onSubmit={dateArithmeticForm.handleSubmit(handleDateArithmeticSubmit)} // Use onSubmit on the form
                   className="space-y-6"
-                  onSubmit={(e) => e.preventDefault()} // Prevent default form submission
                 >
-                  {/* Changed grid layout to always use 1 column for vertical alignment */}
+                  {/* Fields stacked vertically */}
                   <div className="grid grid-cols-1 gap-4">
                      <FormField
                         control={dateArithmeticForm.control}
@@ -267,7 +268,7 @@ export default function Home() {
                                     onChange={field.onChange}
                                     calendarProps={{
                                         disabled: (date) =>
-                                          date < new Date("1900-01-01") || date > new Date(), // Also disable future dates
+                                          date < new Date("1900-01-01") || date > new Date("2200-01-01"), // Allow future dates for arithmetic
                                     }}
                                     placeholder="mm/dd/yyyy"
                                 />
@@ -276,6 +277,30 @@ export default function Home() {
                           </FormItem>
                         )}
                       />
+
+                     {/* New Select Field for Operation */}
+                     <FormField
+                       control={dateArithmeticForm.control}
+                       name="operation"
+                       render={({ field }) => (
+                         <FormItem>
+                           <FormLabel>Operation</FormLabel>
+                           <Select onValueChange={field.onChange} defaultValue={field.value}>
+                             <FormControl>
+                               <SelectTrigger>
+                                 <SelectValue placeholder="Select operation" />
+                               </SelectTrigger>
+                             </FormControl>
+                             <SelectContent>
+                               <SelectItem value="add">Add</SelectItem>
+                               <SelectItem value="subtract">Subtract</SelectItem>
+                             </SelectContent>
+                           </Select>
+                           <FormMessage />
+                         </FormItem>
+                       )}
+                     />
+
                        <FormField
                         control={dateArithmeticForm.control}
                         name="days"
@@ -291,26 +316,14 @@ export default function Home() {
                       />
                   </div>
 
-
-                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                    <Button
-                      type="button" // Important: Change type to button
-                      onClick={() => handleDateArithmeticSubmit("add")}
-                      className="w-full bg-accent hover:bg-accent/90"
-                       disabled={!dateArithmeticForm.formState.isValid} // Disable if form invalid
-                    >
-                      <Plus className="mr-2 h-4 w-4" /> Add Days
-                    </Button>
-                    <Button
-                      type="button" // Important: Change type to button
-                      onClick={() => handleDateArithmeticSubmit("subtract")}
-                      variant="outline"
-                      className="w-full border-accent text-accent hover:bg-accent/10"
-                      disabled={!dateArithmeticForm.formState.isValid} // Disable if form invalid
-                    >
-                      <Minus className="mr-2 h-4 w-4" /> Subtract Days
-                    </Button>
-                  </div>
+                  {/* Single Calculate Button */}
+                  <Button
+                    type="submit"
+                    className="w-full bg-accent hover:bg-accent/90"
+                    disabled={!dateArithmeticForm.formState.isValid || dateArithmeticForm.formState.isSubmitting} // Disable if form invalid or submitting
+                  >
+                    <CalendarDays className="mr-2 h-4 w-4" /> Calculate New Date
+                  </Button>
                 </form>
               </Form>
 
@@ -322,7 +335,7 @@ export default function Home() {
                   <CardContent>
                      <ResultDisplay
                         title={`${arithmeticOperation === 'add' ? 'New Date (Added)' : 'New Date (Subtracted)'}`}
-                        value={format(arithmeticResult, 'PPP')}
+                        value={format(arithmeticResult, 'PPP')} // Use a more readable format like 'MMM d, yyyy'
                         unit=""
                       />
                   </CardContent>
