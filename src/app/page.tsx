@@ -112,6 +112,7 @@ export default function Home() {
   // Date Difference Form
   const dateDifferenceForm = useForm<DateDifferenceValues>({
     resolver: zodResolver(dateDifferenceSchema),
+    mode: 'onChange', // Trigger validation on change
     defaultValues: {
       startDate: undefined,
       endDate: undefined,
@@ -121,6 +122,7 @@ export default function Home() {
   // Date Arithmetic Form
   const dateArithmeticForm = useForm<DateArithmeticValues>({
     resolver: zodResolver(dateArithmeticSchema),
+    mode: 'onChange', // Trigger validation on change for button state
     defaultValues: {
       operation: "add", // Default operation
       baseDate: undefined,
@@ -158,7 +160,7 @@ export default function Home() {
 
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center p-4 bg-secondary">
+    <main className="flex min-h-screen flex-col items-center justify-center p-4 bg-background">
       <Card className="w-full max-w-2xl shadow-lg">
         <CardHeader className="text-center">
           <CardTitle className="text-3xl font-bold text-primary">
@@ -223,7 +225,7 @@ export default function Home() {
                       )}
                     />
                   </div>
-                  <Button type="submit" className="w-full bg-accent hover:bg-accent/90">
+                  <Button type="submit" className="w-full bg-accent hover:bg-accent/90" disabled={!dateDifferenceForm.formState.isValid || dateDifferenceForm.formState.isSubmitting}>
                     Calculate Difference
                   </Button>
                 </form>
@@ -348,4 +350,3 @@ export default function Home() {
     </main>
   );
 }
-
