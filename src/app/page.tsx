@@ -164,7 +164,7 @@ export default function Home() {
       <Card className="w-full max-w-2xl shadow-lg">
         <CardHeader className="text-center">
           <CardTitle className="text-3xl font-bold text-primary">
-            ChronoCalc
+            Date-Arithmetic Boss
           </CardTitle>
           <CardDescription>
             Your friendly neighborhood date calculator.

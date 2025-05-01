@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'ChronoCalc', // Update title
+  title: 'Date-Arithmetic Boss', // Update title
   description: 'Calculate date differences and perform date arithmetic easily.', // Update description
 };
 
