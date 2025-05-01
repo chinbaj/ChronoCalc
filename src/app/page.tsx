@@ -257,7 +257,8 @@ export default function Home() {
                   className="space-y-6"
                   onSubmit={(e) => e.preventDefault()} // Prevent default form submission
                 >
-                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  {/* Changed grid layout to always use 2 columns */}
+                  <div className="grid grid-cols-2 gap-4">
                      <FormField
                         control={dateArithmeticForm.control}
                         name="baseDate"
