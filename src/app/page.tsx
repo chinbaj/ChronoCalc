@@ -35,9 +35,9 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 import { DateInput } from "@/components/ui/date-input"; // Import the new component
+import { Separator } from "@/components/ui/separator"; // Import Separator
 
 // Schema for Date Difference Form
 const dateDifferenceSchema = z.object({
@@ -115,6 +115,7 @@ export default function Home() {
     defaultValues: {
       operation: "add", // Default operation
       baseDate: undefined, // Initialize date as undefined
+      days: undefined,
     },
   });
 
@@ -130,6 +131,9 @@ export default function Home() {
     const years = differenceInYears(endDate, startDate);
     setDateDifferenceResult({ days, weeks, months, years });
     setArithmeticResult(null); // Clear other result
+    setArithmeticOperation(null);
+     // Optionally reset the other form
+    // dateArithmeticForm.reset({ operation: "add", baseDate: undefined, days: undefined });
   };
 
   const handleDateArithmeticSubmit = (operation: "add" | "subtract") => {
@@ -144,18 +148,12 @@ export default function Home() {
           : subDays(baseDate, days);
       setArithmeticResult(resultDate);
       setDateDifferenceResult(null); // Clear other result
+      // Optionally reset the other form
+      // dateDifferenceForm.reset({ startDate: undefined, endDate: undefined });
 
     })(); // Trigger validation and submission
   };
 
-  // Reset results when tab changes
-  const handleTabChange = () => {
-    setDateDifferenceResult(null);
-    setArithmeticResult(null);
-    setArithmeticOperation(null);
-    dateDifferenceForm.reset({ startDate: undefined, endDate: undefined});
-    dateArithmeticForm.reset({ operation: "add", baseDate: undefined, days: undefined }); // Reset with default operation
-  };
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center p-4 bg-secondary">
@@ -168,15 +166,10 @@ export default function Home() {
             Your friendly neighborhood date calculator.
           </CardDescription>
         </CardHeader>
-        <CardContent>
-          <Tabs defaultValue="difference" className="w-full" onValueChange={handleTabChange}>
-            <TabsList className="grid w-full grid-cols-2 mb-6">
-              <TabsTrigger value="difference">Date Difference</TabsTrigger>
-              <TabsTrigger value="arithmetic">Date Arithmetic</TabsTrigger>
-            </TabsList>
-
-            {/* Date Difference Tab */}
-            <TabsContent value="difference">
+        <CardContent className="space-y-8">
+          {/* Date Difference Section */}
+          <div>
+             <h3 className="text-xl font-semibold mb-4 text-center">Date Difference</h3>
               <Form {...dateDifferenceForm}>
                 <form
                   onSubmit={dateDifferenceForm.handleSubmit(
@@ -247,10 +240,13 @@ export default function Home() {
                   </CardContent>
                 </Card>
               )}
-            </TabsContent>
+          </div>
 
-            {/* Date Arithmetic Tab */}
-            <TabsContent value="arithmetic">
+          <Separator className="my-8" />
+
+           {/* Date Arithmetic Section */}
+           <div>
+             <h3 className="text-xl font-semibold mb-4 text-center">Date Arithmetic</h3>
               <Form {...dateArithmeticForm}>
                 <form
                   // We don't use onSubmit here directly, buttons trigger specific handlers
@@ -287,7 +283,7 @@ export default function Home() {
                           <FormItem>
                             <FormLabel>Number of Days</FormLabel>
                             <FormControl>
-                              <Input type="number" placeholder="Enter number of days" {...field} onChange={e => field.onChange(e.target.value === '' ? undefined : +e.target.value)} min="1" step="1" />
+                              <Input type="number" placeholder="Enter number of days" {...field} onChange={e => field.onChange(e.target.value === '' ? undefined : +e.target.value)} value={field.value ?? ''} min="1" step="1" />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -332,8 +328,8 @@ export default function Home() {
                   </CardContent>
                 </Card>
               )}
-            </TabsContent>
-          </Tabs>
+          </div>
+
         </CardContent>
       </Card>
     </main>
