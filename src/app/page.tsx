@@ -221,9 +221,7 @@ export default function Home() {
             <CardTitle className="text-3xl font-bold text-primary">
               Date-Arithmetic Boss
             </CardTitle>
-            <CardDescription>
-              Your friendly neighborhood date calculator.
-            </CardDescription>
+             {/* Removed CardDescription */}
           </CardHeader>
           <CardContent className="space-y-8">
             {/* Date Difference Section */}
@@ -469,3 +467,5 @@ export default function Home() {
     </main>
   );
 }
+
+    
