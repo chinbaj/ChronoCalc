@@ -23,7 +23,6 @@ import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -217,13 +216,12 @@ export default function Home() {
 
         {/* Main Content Card */}
         <Card className="w-full max-w-2xl shadow-lg flex-grow">
-          <CardHeader className="text-center">
-            <CardTitle className="text-3xl font-bold text-primary">
+           <CardHeader className="text-center px-6 pt-6 pb-4"> {/* Reduced padding-bottom */}
+            <CardTitle className="text-2xl font-bold text-primary"> {/* Reduced font size */}
               Date-Arithmetic Boss
             </CardTitle>
-             {/* Removed CardDescription */}
           </CardHeader>
-          <CardContent className="space-y-8">
+          <CardContent className="space-y-8 pt-4"> {/* Adjusted top padding */}
             {/* Date Difference Section */}
             <div>
                <h3 className="text-xl font-semibold mb-4 text-center">Date Difference</h3>
@@ -467,5 +465,3 @@ export default function Home() {
     </main>
   );
 }
-
-    
