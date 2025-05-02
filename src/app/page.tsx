@@ -2,7 +2,7 @@
 "use client";
 
 import type { DateRange } from "react-day-picker";
-import { useState, type ReactNode } from "react";
+import { useState, type ReactNode, useEffect } from "react";
 import {
   addDays,
   differenceInDays,
@@ -12,11 +12,12 @@ import {
   format,
   subDays,
   isValid, // Import isValid
+  intervalToDuration,
 } from "date-fns";
 import { z } from "zod";
 import { useForm, type SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { CalendarDays } from "lucide-react"; // Use a relevant icon
+import { CalendarDays, Cake } from "lucide-react"; // Use a relevant icon
 
 import { Button } from "@/components/ui/button";
 import {
@@ -81,6 +82,17 @@ const dateArithmeticSchema = z.object({
 
 type DateArithmeticValues = z.infer<typeof dateArithmeticSchema>;
 
+// Schema for Age Finder Form
+const ageFinderSchema = z.object({
+  dateOfBirth: z.date({
+    required_error: "Date of birth is required.",
+    invalid_type_error: "Invalid date format.",
+  }).refine(isValid, { message: "Invalid date." })
+    .refine(date => date <= new Date(), { message: "Date of birth cannot be in the future." }), // Ensure date is not in the future
+});
+
+type AgeFinderValues = z.infer<typeof ageFinderSchema>;
+
 interface ResultDisplayProps {
   title: string;
   value: ReactNode;
@@ -108,6 +120,17 @@ export default function Home() {
   const [arithmeticOperation, setArithmeticOperation] = useState<
     "add" | "subtract" | null
   >(null);
+  const [ageResult, setAgeResult] = useState<{
+    years?: number;
+    months?: number;
+    days?: number;
+  } | null>(null);
+  const [currentDate, setCurrentDate] = useState<Date | null>(null);
+
+   // Set current date on client mount to avoid hydration issues
+   useEffect(() => {
+    setCurrentDate(new Date());
+   }, []);
 
   // Date Difference Form
   const dateDifferenceForm = useForm<DateDifferenceValues>({
@@ -130,6 +153,15 @@ export default function Home() {
     },
   });
 
+   // Age Finder Form
+   const ageFinderForm = useForm<AgeFinderValues>({
+    resolver: zodResolver(ageFinderSchema),
+    mode: 'onChange',
+    defaultValues: {
+        dateOfBirth: undefined,
+    }
+   });
+
   // Handlers
   const handleDateDifferenceSubmit: SubmitHandler<DateDifferenceValues> = (
     data
@@ -142,6 +174,7 @@ export default function Home() {
     setDateDifferenceResult({ days, weeks, months, years });
     setArithmeticResult(null);
     setArithmeticOperation(null);
+    setAgeResult(null); // Clear age result
   };
 
   // Updated handler for Date Arithmetic form submission
@@ -156,6 +189,19 @@ export default function Home() {
     setArithmeticResult(resultDate);
     setArithmeticOperation(operation); // Set the operation type for display
     setDateDifferenceResult(null); // Clear other result
+    setAgeResult(null); // Clear age result
+  };
+
+  // Handler for Age Finder form submission
+  const handleAgeFinderSubmit: SubmitHandler<AgeFinderValues> = (data) => {
+    const { dateOfBirth } = data;
+    if (currentDate) {
+        const duration = intervalToDuration({ start: dateOfBirth, end: currentDate });
+        setAgeResult(duration);
+        setDateDifferenceResult(null);
+        setArithmeticResult(null);
+        setArithmeticOperation(null);
+    }
   };
 
 
@@ -194,7 +240,7 @@ export default function Home() {
                                 onChange={field.onChange}
                                 calendarProps={{
                                     disabled: (date) =>
-                                      date > new Date() || date < new Date("1900-01-01"),
+                                      date > (currentDate || new Date()) || date < new Date("1900-01-01"),
                                 }}
                                 placeholder="mm/dd/yyyy"
                               />
@@ -215,7 +261,7 @@ export default function Home() {
                                   onChange={field.onChange}
                                   calendarProps={{
                                       disabled: (date) =>
-                                      date < (dateDifferenceForm.getValues("startDate") || new Date("1900-01-01")) || date > new Date(), // Also disable future dates
+                                      date < (dateDifferenceForm.getValues("startDate") || new Date("1900-01-01")) || date > (currentDate || new Date()), // Also disable future dates
                                   }}
                                   placeholder="mm/dd/yyyy"
                               />
@@ -234,7 +280,7 @@ export default function Home() {
               {dateDifferenceResult && (
                 <Card className="mt-6 bg-secondary border-border">
                   <CardHeader>
-                    <CardTitle className="text-xl">Result</CardTitle>
+                    <CardTitle className="text-xl">Difference Result</CardTitle>
                   </CardHeader>
                   <CardContent className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                     <ResultDisplay title="Years" value={dateDifferenceResult.years} unit="years" />
@@ -332,7 +378,7 @@ export default function Home() {
               {arithmeticResult && arithmeticOperation && (
                  <Card className="mt-6 bg-secondary border-border">
                   <CardHeader>
-                    <CardTitle className="text-xl">Result</CardTitle>
+                    <CardTitle className="text-xl">Arithmetic Result</CardTitle>
                   </CardHeader>
                   <CardContent>
                      <ResultDisplay
@@ -343,6 +389,63 @@ export default function Home() {
                   </CardContent>
                 </Card>
               )}
+          </div>
+
+          <Separator className="my-8" />
+
+          {/* Find Age Section */}
+          <div>
+            <h3 className="text-xl font-semibold mb-4 text-center">Find Age</h3>
+            <Form {...ageFinderForm}>
+              <form
+                onSubmit={ageFinderForm.handleSubmit(handleAgeFinderSubmit)}
+                className="space-y-6"
+              >
+                <div className="grid grid-cols-1 gap-4">
+                   <FormField
+                    control={ageFinderForm.control}
+                    name="dateOfBirth"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-col">
+                        <FormLabel>Date of Birth</FormLabel>
+                        <FormControl>
+                          <DateInput
+                            value={field.value}
+                            onChange={field.onChange}
+                            calendarProps={{
+                              disabled: (date) =>
+                                date > (currentDate || new Date()) || date < new Date("1900-01-01"), // Disable future dates and very old dates
+                               captionLayout: "dropdown-buttons", // Add year/month dropdowns
+                               fromYear: 1900, // Set earliest year
+                               toYear: currentDate ? currentDate.getFullYear() : new Date().getFullYear(), // Set latest year to current year
+                            }}
+                            placeholder="mm/dd/yyyy"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                 <Button type="submit" className="w-full bg-accent hover:bg-accent/90" disabled={!ageFinderForm.formState.isValid || ageFinderForm.formState.isSubmitting || !currentDate}>
+                    <Cake className="mr-2 h-4 w-4" /> Calculate Age
+                 </Button>
+              </form>
+            </Form>
+
+            {ageResult && (
+                <Card className="mt-6 bg-secondary border-border">
+                  <CardHeader>
+                    <CardTitle className="text-xl">Age Result</CardTitle>
+                  </CardHeader>
+                  <CardContent className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                    <ResultDisplay title="Years" value={ageResult.years ?? 0} unit="years" />
+                    <ResultDisplay title="Months" value={ageResult.months ?? 0} unit="months" />
+                    <ResultDisplay title="Days" value={ageResult.days ?? 0} unit="days" />
+                  </CardContent>
+                </Card>
+              )}
+
           </div>
 
         </CardContent>
