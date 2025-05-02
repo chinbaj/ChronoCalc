@@ -245,7 +245,7 @@ export default function Home() {
                                   onChange={field.onChange}
                                   calendarProps={{
                                       disabled: (date) =>
-                                        date > (currentDate || new Date()) || date < new Date("1900-01-01"),
+                                        date > new Date("2200-01-01") || date < new Date("1900-01-01"), // Allow future dates, keep past limit
                                   }}
                                   placeholder="mm/dd/yyyy"
                                 />
@@ -266,7 +266,7 @@ export default function Home() {
                                     onChange={field.onChange}
                                     calendarProps={{
                                         disabled: (date) =>
-                                        date < (dateDifferenceForm.getValues("startDate") || new Date("1900-01-01")) || date > (currentDate || new Date()), // Also disable future dates
+                                        date < (dateDifferenceForm.getValues("startDate") || new Date("1900-01-01")) || date > new Date("2200-01-01"), // Allow future dates, ensure it's after start date
                                     }}
                                     placeholder="mm/dd/yyyy"
                                 />
