@@ -46,6 +46,7 @@ import {
 import { cn } from "@/lib/utils";
 import { DateInput } from "@/components/ui/date-input";
 import { Separator } from "@/components/ui/separator";
+import { AdSensePlaceholder } from "@/components/ads/adsense-placeholder"; // Import AdSense placeholder
 
 // Schema for Date Difference Form
 const dateDifferenceSchema = z.object({
@@ -206,117 +207,70 @@ export default function Home() {
 
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center p-4 bg-background">
-      <Card className="w-full max-w-2xl shadow-lg">
-        <CardHeader className="text-center">
-          <CardTitle className="text-3xl font-bold text-primary">
-            Date-Arithmetic Boss
-          </CardTitle>
-          <CardDescription>
-            Your friendly neighborhood date calculator.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-8">
-          {/* Date Difference Section */}
-          <div>
-             <h3 className="text-xl font-semibold mb-4 text-center">Date Difference</h3>
-              <Form {...dateDifferenceForm}>
-                <form
-                  onSubmit={dateDifferenceForm.handleSubmit(
-                    handleDateDifferenceSubmit
-                  )}
-                  className="space-y-6"
-                >
-                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                    <FormField
-                      control={dateDifferenceForm.control}
-                      name="startDate"
-                      render={({ field }) => (
-                        <FormItem className="flex flex-col">
-                          <FormLabel>Start Date</FormLabel>
-                           <FormControl>
-                             <DateInput
-                                value={field.value}
-                                onChange={field.onChange}
-                                calendarProps={{
-                                    disabled: (date) =>
-                                      date > (currentDate || new Date()) || date < new Date("1900-01-01"),
-                                }}
-                                placeholder="mm/dd/yyyy"
-                              />
-                           </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={dateDifferenceForm.control}
-                      name="endDate"
-                      render={({ field }) => (
-                        <FormItem className="flex flex-col">
-                          <FormLabel>End Date</FormLabel>
-                          <FormControl>
-                              <DateInput
+     <main className="flex min-h-screen justify-center p-4 bg-background">
+      <div className="flex w-full max-w-7xl justify-center gap-8"> {/* Increased max-width and added gap */}
+
+        {/* Left Ad Placeholder */}
+        <aside className="hidden lg:block w-40 flex-shrink-0 sticky top-4 h-fit">
+          <AdSensePlaceholder width={160} height={600} />
+        </aside>
+
+        {/* Main Content Card */}
+        <Card className="w-full max-w-2xl shadow-lg flex-grow">
+          <CardHeader className="text-center">
+            <CardTitle className="text-3xl font-bold text-primary">
+              Date-Arithmetic Boss
+            </CardTitle>
+            <CardDescription>
+              Your friendly neighborhood date calculator.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-8">
+            {/* Date Difference Section */}
+            <div>
+               <h3 className="text-xl font-semibold mb-4 text-center">Date Difference</h3>
+                <Form {...dateDifferenceForm}>
+                  <form
+                    onSubmit={dateDifferenceForm.handleSubmit(
+                      handleDateDifferenceSubmit
+                    )}
+                    className="space-y-6"
+                  >
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                      <FormField
+                        control={dateDifferenceForm.control}
+                        name="startDate"
+                        render={({ field }) => (
+                          <FormItem className="flex flex-col">
+                            <FormLabel>Start Date</FormLabel>
+                             <FormControl>
+                               <DateInput
                                   value={field.value}
                                   onChange={field.onChange}
                                   calendarProps={{
                                       disabled: (date) =>
-                                      date < (dateDifferenceForm.getValues("startDate") || new Date("1900-01-01")) || date > (currentDate || new Date()), // Also disable future dates
+                                        date > (currentDate || new Date()) || date < new Date("1900-01-01"),
                                   }}
                                   placeholder="mm/dd/yyyy"
-                              />
-                           </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                  <Button type="submit" className="w-full bg-accent hover:bg-accent/90" disabled={!dateDifferenceForm.formState.isValid || dateDifferenceForm.formState.isSubmitting}>
-                    Calculate Difference
-                  </Button>
-                </form>
-              </Form>
-
-              {dateDifferenceResult && (
-                <Card className="mt-6 bg-secondary border-border">
-                  <CardHeader>
-                    <CardTitle className="text-xl">Difference Result</CardTitle>
-                  </CardHeader>
-                  <CardContent className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                    <ResultDisplay title="Years" value={dateDifferenceResult.years} unit="years" />
-                    <ResultDisplay title="Months" value={dateDifferenceResult.months} unit="months" />
-                    <ResultDisplay title="Weeks" value={dateDifferenceResult.weeks} unit="weeks" />
-                    <ResultDisplay title="Days" value={dateDifferenceResult.days} unit="days" />
-                  </CardContent>
-                </Card>
-              )}
-          </div>
-
-          <Separator className="my-8" />
-
-           {/* Date Arithmetic Section */}
-           <div>
-             <h3 className="text-xl font-semibold mb-4 text-center">Date Arithmetic</h3>
-              <Form {...dateArithmeticForm}>
-                <form
-                  onSubmit={dateArithmeticForm.handleSubmit(handleDateArithmeticSubmit)} // Use onSubmit on the form
-                  className="space-y-6"
-                >
-                  {/* Fields stacked vertically */}
-                  <div className="grid grid-cols-1 gap-4">
-                     <FormField
-                        control={dateArithmeticForm.control}
-                        name="baseDate"
+                                />
+                             </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={dateDifferenceForm.control}
+                        name="endDate"
                         render={({ field }) => (
                           <FormItem className="flex flex-col">
-                            <FormLabel>Date</FormLabel>
-                             <FormControl>
+                            <FormLabel>End Date</FormLabel>
+                            <FormControl>
                                 <DateInput
                                     value={field.value}
                                     onChange={field.onChange}
                                     calendarProps={{
                                         disabled: (date) =>
-                                          date < new Date("1900-01-01") || date > new Date("2200-01-01"), // Allow future dates for arithmetic
+                                        date < (dateDifferenceForm.getValues("startDate") || new Date("1900-01-01")) || date > (currentDate || new Date()), // Also disable future dates
                                     }}
                                     placeholder="mm/dd/yyyy"
                                 />
@@ -325,131 +279,193 @@ export default function Home() {
                           </FormItem>
                         )}
                       />
+                    </div>
+                    <Button type="submit" className="w-full bg-accent hover:bg-accent/90" disabled={!dateDifferenceForm.formState.isValid || dateDifferenceForm.formState.isSubmitting}>
+                      Calculate Difference
+                    </Button>
+                  </form>
+                </Form>
 
-                     {/* New Select Field for Operation */}
-                     <FormField
-                       control={dateArithmeticForm.control}
-                       name="operation"
-                       render={({ field }) => (
-                         <FormItem>
-                           <FormLabel>Operation</FormLabel>
-                           <Select onValueChange={field.onChange} defaultValue={field.value}>
-                             <FormControl>
-                               <SelectTrigger>
-                                 <SelectValue placeholder="Select operation" />
-                               </SelectTrigger>
-                             </FormControl>
-                             <SelectContent>
-                               <SelectItem value="add">Add</SelectItem>
-                               <SelectItem value="subtract">Subtract</SelectItem>
-                             </SelectContent>
-                           </Select>
-                           <FormMessage />
-                         </FormItem>
-                       )}
-                     />
+                {dateDifferenceResult && (
+                  <Card className="mt-6 bg-secondary border-border">
+                    <CardHeader>
+                      <CardTitle className="text-xl">Difference Result</CardTitle>
+                    </CardHeader>
+                    <CardContent className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                      <ResultDisplay title="Years" value={dateDifferenceResult.years} unit="years" />
+                      <ResultDisplay title="Months" value={dateDifferenceResult.months} unit="months" />
+                      <ResultDisplay title="Weeks" value={dateDifferenceResult.weeks} unit="weeks" />
+                      <ResultDisplay title="Days" value={dateDifferenceResult.days} unit="days" />
+                    </CardContent>
+                  </Card>
+                )}
+            </div>
 
-                       <FormField
-                        control={dateArithmeticForm.control}
-                        name="days"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Number of Days</FormLabel>
-                            <FormControl>
-                              <Input type="number" placeholder="Enter number of days" {...field} onChange={e => field.onChange(e.target.value === '' ? undefined : +e.target.value)} value={field.value ?? ''} min="1" step="1" />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                  </div>
+            <Separator className="my-8" />
 
-                  {/* Single Calculate Button */}
-                  <Button
-                    type="submit"
-                    className="w-full bg-accent hover:bg-accent/90"
-                    disabled={!dateArithmeticForm.formState.isValid || dateArithmeticForm.formState.isSubmitting} // Disable if form invalid or submitting
+             {/* Date Arithmetic Section */}
+             <div>
+               <h3 className="text-xl font-semibold mb-4 text-center">Date Arithmetic</h3>
+                <Form {...dateArithmeticForm}>
+                  <form
+                    onSubmit={dateArithmeticForm.handleSubmit(handleDateArithmeticSubmit)} // Use onSubmit on the form
+                    className="space-y-6"
                   >
-                    <CalendarDays className="mr-2 h-4 w-4" /> Calculate New Date
-                  </Button>
+                    {/* Fields stacked vertically */}
+                    <div className="grid grid-cols-1 gap-4">
+                       <FormField
+                          control={dateArithmeticForm.control}
+                          name="baseDate"
+                          render={({ field }) => (
+                            <FormItem className="flex flex-col">
+                              <FormLabel>Date</FormLabel>
+                               <FormControl>
+                                  <DateInput
+                                      value={field.value}
+                                      onChange={field.onChange}
+                                      calendarProps={{
+                                          disabled: (date) =>
+                                            date < new Date("1900-01-01") || date > new Date("2200-01-01"), // Allow future dates for arithmetic
+                                      }}
+                                      placeholder="mm/dd/yyyy"
+                                  />
+                               </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                       {/* New Select Field for Operation */}
+                       <FormField
+                         control={dateArithmeticForm.control}
+                         name="operation"
+                         render={({ field }) => (
+                           <FormItem>
+                             <FormLabel>Operation</FormLabel>
+                             <Select onValueChange={field.onChange} defaultValue={field.value}>
+                               <FormControl>
+                                 <SelectTrigger>
+                                   <SelectValue placeholder="Select operation" />
+                                 </SelectTrigger>
+                               </FormControl>
+                               <SelectContent>
+                                 <SelectItem value="add">Add</SelectItem>
+                                 <SelectItem value="subtract">Subtract</SelectItem>
+                               </SelectContent>
+                             </Select>
+                             <FormMessage />
+                           </FormItem>
+                         )}
+                       />
+
+                         <FormField
+                          control={dateArithmeticForm.control}
+                          name="days"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Number of Days</FormLabel>
+                              <FormControl>
+                                <Input type="number" placeholder="Enter number of days" {...field} onChange={e => field.onChange(e.target.value === '' ? undefined : +e.target.value)} value={field.value ?? ''} min="1" step="1" />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                    </div>
+
+                    {/* Single Calculate Button */}
+                    <Button
+                      type="submit"
+                      className="w-full bg-accent hover:bg-accent/90"
+                      disabled={!dateArithmeticForm.formState.isValid || dateArithmeticForm.formState.isSubmitting} // Disable if form invalid or submitting
+                    >
+                      <CalendarDays className="mr-2 h-4 w-4" /> Calculate New Date
+                    </Button>
+                  </form>
+                </Form>
+
+                {arithmeticResult && arithmeticOperation && (
+                   <Card className="mt-6 bg-secondary border-border">
+                    <CardHeader>
+                      <CardTitle className="text-xl">Arithmetic Result</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                       <ResultDisplay
+                          title={`${arithmeticOperation === 'add' ? 'New Date (Added)' : 'New Date (Subtracted)'}`}
+                          value={format(arithmeticResult, 'PPP')} // Use a more readable format like 'MMM d, yyyy'
+                          unit=""
+                        />
+                    </CardContent>
+                  </Card>
+                )}
+            </div>
+
+            <Separator className="my-8" />
+
+            {/* Find Age Section */}
+            <div>
+              <h3 className="text-xl font-semibold mb-4 text-center">Find Age</h3>
+              <Form {...ageFinderForm}>
+                <form
+                  onSubmit={ageFinderForm.handleSubmit(handleAgeFinderSubmit)}
+                  className="space-y-6"
+                >
+                  <div className="grid grid-cols-1 gap-4">
+                     <FormField
+                      control={ageFinderForm.control}
+                      name="dateOfBirth"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-col">
+                          <FormLabel>Date of Birth</FormLabel>
+                          <FormControl>
+                            <DateInput
+                              value={field.value}
+                              onChange={field.onChange}
+                              calendarProps={{
+                                disabled: (date) =>
+                                  date > (currentDate || new Date()) || date < new Date("1900-01-01"), // Disable future dates and very old dates
+                                 captionLayout: "dropdown-buttons", // Add year/month dropdowns
+                                 fromYear: 1900, // Set earliest year
+                                 toYear: currentDate ? currentDate.getFullYear() : new Date().getFullYear(), // Set latest year to current year
+                              }}
+                              placeholder="mm/dd/yyyy"
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                   <Button type="submit" className="w-full bg-accent hover:bg-accent/90" disabled={!ageFinderForm.formState.isValid || ageFinderForm.formState.isSubmitting || !currentDate}>
+                      <Cake className="mr-2 h-4 w-4" /> Calculate Age
+                   </Button>
                 </form>
               </Form>
 
-              {arithmeticResult && arithmeticOperation && (
-                 <Card className="mt-6 bg-secondary border-border">
-                  <CardHeader>
-                    <CardTitle className="text-xl">Arithmetic Result</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                     <ResultDisplay
-                        title={`${arithmeticOperation === 'add' ? 'New Date (Added)' : 'New Date (Subtracted)'}`}
-                        value={format(arithmeticResult, 'PPP')} // Use a more readable format like 'MMM d, yyyy'
-                        unit=""
-                      />
-                  </CardContent>
-                </Card>
-              )}
-          </div>
+              {ageResult && (
+                  <Card className="mt-6 bg-secondary border-border">
+                    <CardHeader>
+                      <CardTitle className="text-xl">Age Result</CardTitle>
+                    </CardHeader>
+                    <CardContent className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                      <ResultDisplay title="Years" value={ageResult.years ?? 0} unit="years" />
+                      <ResultDisplay title="Months" value={ageResult.months ?? 0} unit="months" />
+                      <ResultDisplay title="Days" value={ageResult.days ?? 0} unit="days" />
+                    </CardContent>
+                  </Card>
+                )}
 
-          <Separator className="my-8" />
+            </div>
 
-          {/* Find Age Section */}
-          <div>
-            <h3 className="text-xl font-semibold mb-4 text-center">Find Age</h3>
-            <Form {...ageFinderForm}>
-              <form
-                onSubmit={ageFinderForm.handleSubmit(handleAgeFinderSubmit)}
-                className="space-y-6"
-              >
-                <div className="grid grid-cols-1 gap-4">
-                   <FormField
-                    control={ageFinderForm.control}
-                    name="dateOfBirth"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-col">
-                        <FormLabel>Date of Birth</FormLabel>
-                        <FormControl>
-                          <DateInput
-                            value={field.value}
-                            onChange={field.onChange}
-                            calendarProps={{
-                              disabled: (date) =>
-                                date > (currentDate || new Date()) || date < new Date("1900-01-01"), // Disable future dates and very old dates
-                               captionLayout: "dropdown-buttons", // Add year/month dropdowns
-                               fromYear: 1900, // Set earliest year
-                               toYear: currentDate ? currentDate.getFullYear() : new Date().getFullYear(), // Set latest year to current year
-                            }}
-                            placeholder="mm/dd/yyyy"
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-                 <Button type="submit" className="w-full bg-accent hover:bg-accent/90" disabled={!ageFinderForm.formState.isValid || ageFinderForm.formState.isSubmitting || !currentDate}>
-                    <Cake className="mr-2 h-4 w-4" /> Calculate Age
-                 </Button>
-              </form>
-            </Form>
+          </CardContent>
+        </Card>
 
-            {ageResult && (
-                <Card className="mt-6 bg-secondary border-border">
-                  <CardHeader>
-                    <CardTitle className="text-xl">Age Result</CardTitle>
-                  </CardHeader>
-                  <CardContent className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-                    <ResultDisplay title="Years" value={ageResult.years ?? 0} unit="years" />
-                    <ResultDisplay title="Months" value={ageResult.months ?? 0} unit="months" />
-                    <ResultDisplay title="Days" value={ageResult.days ?? 0} unit="days" />
-                  </CardContent>
-                </Card>
-              )}
+        {/* Right Ad Placeholder */}
+         <aside className="hidden lg:block w-40 flex-shrink-0 sticky top-4 h-fit">
+            <AdSensePlaceholder width={160} height={600} />
+         </aside>
 
-          </div>
-
-        </CardContent>
-      </Card>
+      </div>
     </main>
   );
 }
