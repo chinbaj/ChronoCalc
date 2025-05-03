@@ -16,6 +16,7 @@ import {
   subYears, // Import subYears
   isValid,
   intervalToDuration,
+  isBefore, // Used for conception date validation
 } from "date-fns";
 import { z } from "zod";
 import { useForm, type SubmitHandler } from "react-hook-form";
@@ -49,6 +50,7 @@ import { cn } from "@/lib/utils";
 import { DateInput } from "@/components/ui/date-input";
 import { Separator } from "@/components/ui/separator";
 import { AdSensePlaceholder } from "@/components/ads/adsense-placeholder";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"; // Import RadioGroup
 
 // --- Schemas ---
 
@@ -88,21 +90,87 @@ const ageFinderSchema = z.object({
     .refine(date => date <= new Date(), { message: "Date of birth cannot be in the future." }),
 });
 
-// Schema for Pregnancy Due Date Form
+// Updated Schema for Pregnancy Due Date Form
 const pregnancyDueDateSchema = z.object({
+  calculationMethod: z.enum(['lmp', 'conception'], {
+    required_error: "Please select a calculation method.",
+  }),
   lastMenstrualPeriod: z.date({
-    required_error: "Last menstrual period date is required.",
     invalid_type_error: "Invalid date format.",
-  }).refine(isValid, { message: "Invalid date." })
-    .refine(date => date <= new Date(), { message: "LMP date cannot be in the future." }), // Ensure date is not in the future
+  }).optional(),
+  conceptionDate: z.date({
+    invalid_type_error: "Invalid date format.",
+  }).optional(),
+}).superRefine((data, ctx) => {
+  const now = new Date();
+  const nineMonthsAgo = subMonths(now, 9); // Approximate conception window start
+
+  if (data.calculationMethod === 'lmp') {
+    if (!data.lastMenstrualPeriod) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Last menstrual period date is required.",
+        path: ["lastMenstrualPeriod"],
+      });
+    } else if (!isValid(data.lastMenstrualPeriod)) {
+       ctx.addIssue({
+        code: z.ZodIssueCode.invalid_date,
+        message: "Invalid date.",
+        path: ["lastMenstrualPeriod"],
+      });
+    } else if (isBefore(now, data.lastMenstrualPeriod)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "LMP date cannot be in the future.",
+        path: ["lastMenstrualPeriod"],
+      });
+    }
+     // Optional: Add check if LMP is too far in the past (e.g., > 2 years)
+     else if (isBefore(data.lastMenstrualPeriod, subYears(now, 2))) {
+       ctx.addIssue({
+         code: z.ZodIssueCode.custom,
+         message: "LMP date seems too old.",
+         path: ["lastMenstrualPeriod"],
+       });
+     }
+  } else if (data.calculationMethod === 'conception') {
+    if (!data.conceptionDate) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Conception date is required.",
+        path: ["conceptionDate"],
+      });
+    } else if (!isValid(data.conceptionDate)) {
+        ctx.addIssue({
+            code: z.ZodIssueCode.invalid_date,
+            message: "Invalid date.",
+            path: ["conceptionDate"],
+        });
+    } else if (isBefore(now, data.conceptionDate)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Conception date cannot be in the future.",
+        path: ["conceptionDate"],
+      });
+    }
+    // Check if conception date is reasonably within the last 9 months
+    else if (isBefore(data.conceptionDate, nineMonthsAgo)) {
+        ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "Conception date seems too old.",
+            path: ["conceptionDate"],
+        });
+    }
+  }
 });
+
 
 // --- Types ---
 
 type DateDifferenceValues = z.infer<typeof dateDifferenceSchema>;
 type DateArithmeticValues = z.infer<typeof dateArithmeticSchema>;
 type AgeFinderValues = z.infer<typeof ageFinderSchema>;
-type PregnancyDueDateValues = z.infer<typeof pregnancyDueDateSchema>; // Type for new form
+type PregnancyDueDateValues = z.infer<typeof pregnancyDueDateSchema>; // Updated Type
 
 // --- Components ---
 
@@ -181,11 +249,16 @@ export default function Home() {
    // Pregnancy Due Date Form
    const pregnancyDueDateForm = useForm<PregnancyDueDateValues>({
        resolver: zodResolver(pregnancyDueDateSchema),
-       mode: 'onChange',
+       mode: 'onChange', // Use onChange for immediate feedback on radio/date changes
        defaultValues: {
+           calculationMethod: 'lmp', // Default to LMP
            lastMenstrualPeriod: undefined,
+           conceptionDate: undefined,
        }
    });
+
+   // Watch the calculation method to conditionally render fields
+   const calculationMethod = pregnancyDueDateForm.watch('calculationMethod');
 
   // --- Handlers ---
 
@@ -227,13 +300,21 @@ export default function Home() {
     }
   };
 
-  // Handler for Pregnancy Due Date form submission
+  // Updated Handler for Pregnancy Due Date form submission
   const handlePregnancyDueDateSubmit: SubmitHandler<PregnancyDueDateValues> = (data) => {
-      const { lastMenstrualPeriod } = data;
-      // Naegele's Rule: LMP + 1 year - 3 months + 7 days
-      let dueDate = addYears(lastMenstrualPeriod, 1);
-      dueDate = subMonths(dueDate, 3);
-      dueDate = addDays(dueDate, 7);
+      const { calculationMethod, lastMenstrualPeriod, conceptionDate } = data;
+      let dueDate: Date | null = null;
+
+      if (calculationMethod === 'lmp' && lastMenstrualPeriod && isValid(lastMenstrualPeriod)) {
+        // Naegele's Rule: LMP + 1 year - 3 months + 7 days
+        let tempDate = addYears(lastMenstrualPeriod, 1);
+        tempDate = subMonths(tempDate, 3);
+        dueDate = addDays(tempDate, 7);
+      } else if (calculationMethod === 'conception' && conceptionDate && isValid(conceptionDate)) {
+        // Conception Date + 266 days
+        dueDate = addDays(conceptionDate, 266);
+      }
+
       setPregnancyDueDateResult(dueDate);
       setDateDifferenceResult(null);
       setArithmeticResult(null);
@@ -498,35 +579,99 @@ export default function Home() {
                   onSubmit={pregnancyDueDateForm.handleSubmit(handlePregnancyDueDateSubmit)}
                   className="space-y-6"
                 >
-                  <div className="grid grid-cols-1 gap-4">
-                    <FormField
-                      control={pregnancyDueDateForm.control}
-                      name="lastMenstrualPeriod"
-                      render={({ field }) => (
-                        <FormItem className="flex flex-col">
-                          <FormLabel>First Day of Last Menstrual Period (LMP)</FormLabel>
-                          <FormControl>
-                            <DateInput
-                              value={field.value}
-                              onChange={field.onChange}
-                              calendarProps={{
-                                disabled: (date) =>
-                                  date > (currentDate || new Date()) || date < subYears(new Date(), 2), // Disable future dates and dates older than 2 years
-                                captionLayout: "dropdown-buttons",
-                                fromYear: currentDate ? currentDate.getFullYear() - 2 : new Date().getFullYear() - 2, // Start 2 years ago
-                                toYear: currentDate ? currentDate.getFullYear() : new Date().getFullYear(), // End at current year
-                              }}
-                              placeholder="mm/dd/yyyy"
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                  <Button type="submit" className="w-full bg-accent hover:bg-accent/90" disabled={!pregnancyDueDateForm.formState.isValid || pregnancyDueDateForm.formState.isSubmitting || !currentDate}>
+                   <FormField
+                     control={pregnancyDueDateForm.control}
+                     name="calculationMethod"
+                     render={({ field }) => (
+                       <FormItem className="space-y-3">
+                         <FormLabel>Calculate based on:</FormLabel>
+                         <FormControl>
+                           <RadioGroup
+                             onValueChange={field.onChange}
+                             defaultValue={field.value}
+                             className="flex flex-col space-y-1 sm:flex-row sm:space-y-0 sm:space-x-4"
+                           >
+                             <FormItem className="flex items-center space-x-3 space-y-0">
+                               <FormControl>
+                                 <RadioGroupItem value="lmp" />
+                               </FormControl>
+                               <FormLabel className="font-normal">
+                                 Last Menstrual Period (LMP)
+                               </FormLabel>
+                             </FormItem>
+                             <FormItem className="flex items-center space-x-3 space-y-0">
+                               <FormControl>
+                                 <RadioGroupItem value="conception" />
+                               </FormControl>
+                               <FormLabel className="font-normal">
+                                 Conception Date
+                               </FormLabel>
+                             </FormItem>
+                           </RadioGroup>
+                         </FormControl>
+                         <FormMessage />
+                       </FormItem>
+                     )}
+                   />
+
+                   {/* Conditional Fields */}
+                   {calculationMethod === 'lmp' && (
+                     <FormField
+                       control={pregnancyDueDateForm.control}
+                       name="lastMenstrualPeriod"
+                       render={({ field }) => (
+                         <FormItem className="flex flex-col">
+                           <FormLabel>First Day of Last Menstrual Period (LMP)</FormLabel>
+                           <FormControl>
+                             <DateInput
+                               value={field.value}
+                               onChange={field.onChange}
+                               calendarProps={{
+                                 disabled: (date) =>
+                                   date > (currentDate || new Date()) || date < subYears(new Date(), 2), // Disable future dates and dates older than 2 years
+                                 captionLayout: "dropdown-buttons",
+                                 fromYear: currentDate ? currentDate.getFullYear() - 2 : new Date().getFullYear() - 2, // Start 2 years ago
+                                 toYear: currentDate ? currentDate.getFullYear() : new Date().getFullYear(), // End at current year
+                               }}
+                               placeholder="mm/dd/yyyy"
+                             />
+                           </FormControl>
+                           <FormMessage />
+                         </FormItem>
+                       )}
+                     />
+                   )}
+
+                   {calculationMethod === 'conception' && (
+                     <FormField
+                       control={pregnancyDueDateForm.control}
+                       name="conceptionDate"
+                       render={({ field }) => (
+                         <FormItem className="flex flex-col">
+                           <FormLabel>Estimated Conception Date</FormLabel>
+                           <FormControl>
+                             <DateInput
+                               value={field.value}
+                               onChange={field.onChange}
+                               calendarProps={{
+                                 disabled: (date) =>
+                                   date > (currentDate || new Date()) || date < subMonths(new Date(), 9), // Disable future dates and dates older than ~9 months
+                                 captionLayout: "dropdown-buttons",
+                                 fromYear: currentDate ? currentDate.getFullYear() - 1 : new Date().getFullYear() - 1, // Limit to past year
+                                 toYear: currentDate ? currentDate.getFullYear() : new Date().getFullYear(), // End at current year
+                               }}
+                               placeholder="mm/dd/yyyy"
+                             />
+                           </FormControl>
+                           <FormMessage />
+                         </FormItem>
+                       )}
+                     />
+                   )}
+
+                   <Button type="submit" className="w-full bg-accent hover:bg-accent/90" disabled={!pregnancyDueDateForm.formState.isValid || pregnancyDueDateForm.formState.isSubmitting || !currentDate}>
                     <Baby className="mr-2 h-4 w-4" /> Estimate Due Date
-                  </Button>
+                   </Button>
                 </form>
               </Form>
 
@@ -541,7 +686,9 @@ export default function Home() {
                       value={format(pregnancyDueDateResult, 'PPP')} // e.g., Jun 20, 2024
                       unit=""
                     />
-                     <p className="text-xs text-muted-foreground mt-2">Note: This is an estimate based on Naegele's rule. Consult your healthcare provider for confirmation.</p>
+                     <p className="text-xs text-muted-foreground mt-2">
+                       Note: This is an estimate based on the {calculationMethod === 'lmp' ? "LMP (Naegele's rule)" : "conception date"}. Consult your healthcare provider for confirmation.
+                     </p>
                   </CardContent>
                 </Card>
               )}
