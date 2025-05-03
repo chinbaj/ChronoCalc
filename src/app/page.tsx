@@ -5,19 +5,21 @@ import type { DateRange } from "react-day-picker";
 import { useState, type ReactNode, useEffect } from "react";
 import {
   addDays,
+  addYears, // Added for pregnancy calculation
   differenceInDays,
   differenceInMonths,
   differenceInWeeks,
   differenceInYears,
   format,
   subDays,
-  isValid, // Import isValid
+  subMonths, // Added for pregnancy calculation
+  isValid,
   intervalToDuration,
 } from "date-fns";
 import { z } from "zod";
 import { useForm, type SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { CalendarDays, Cake } from "lucide-react"; // Use a relevant icon
+import { CalendarDays, Cake, Baby } from "lucide-react"; // Added Baby icon
 
 import { Button } from "@/components/ui/button";
 import {
@@ -41,13 +43,14 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"; // Import Select components
+} from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { DateInput } from "@/components/ui/date-input";
 import { Separator } from "@/components/ui/separator";
-import { AdSensePlaceholder } from "@/components/ads/adsense-placeholder"; // Import AdSense placeholder
+import { AdSensePlaceholder } from "@/components/ads/adsense-placeholder";
 
-// Schema for Date Difference Form
+// --- Schemas ---
+
 const dateDifferenceSchema = z.object({
   startDate: z.date({
     required_error: "Start date is required.",
@@ -62,10 +65,6 @@ const dateDifferenceSchema = z.object({
     path: ["endDate"],
 });
 
-
-type DateDifferenceValues = z.infer<typeof dateDifferenceSchema>;
-
-// Schema for Date Arithmetic Form
 const dateArithmeticSchema = z.object({
   baseDate: z.date({
     required_error: "A date is required.",
@@ -73,25 +72,38 @@ const dateArithmeticSchema = z.object({
    }).refine(isValid, { message: "Invalid date." }),
   operation: z.enum(["add", "subtract"], {
     required_error: "Operation is required.",
-  }), // Added operation to schema
+  }),
   days: z.coerce
     .number({ invalid_type_error: "Must be a number." })
     .int("Must be an integer.")
     .min(1, "Must be at least 1 day."),
 });
 
-type DateArithmeticValues = z.infer<typeof dateArithmeticSchema>;
-
-// Schema for Age Finder Form
 const ageFinderSchema = z.object({
   dateOfBirth: z.date({
     required_error: "Date of birth is required.",
     invalid_type_error: "Invalid date format.",
   }).refine(isValid, { message: "Invalid date." })
-    .refine(date => date <= new Date(), { message: "Date of birth cannot be in the future." }), // Ensure date is not in the future
+    .refine(date => date <= new Date(), { message: "Date of birth cannot be in the future." }),
 });
 
+// Schema for Pregnancy Due Date Form
+const pregnancyDueDateSchema = z.object({
+  lastMenstrualPeriod: z.date({
+    required_error: "Last menstrual period date is required.",
+    invalid_type_error: "Invalid date format.",
+  }).refine(isValid, { message: "Invalid date." })
+    .refine(date => date <= new Date(), { message: "LMP date cannot be in the future." }), // Ensure date is not in the future
+});
+
+// --- Types ---
+
+type DateDifferenceValues = z.infer<typeof dateDifferenceSchema>;
+type DateArithmeticValues = z.infer<typeof dateArithmeticSchema>;
 type AgeFinderValues = z.infer<typeof ageFinderSchema>;
+type PregnancyDueDateValues = z.infer<typeof pregnancyDueDateSchema>; // Type for new form
+
+// --- Components ---
 
 interface ResultDisplayProps {
   title: string;
@@ -109,7 +121,10 @@ function ResultDisplay({ title, value, unit }: ResultDisplayProps) {
   );
 }
 
+// --- Main Component ---
+
 export default function Home() {
+  // State for results
   const [dateDifferenceResult, setDateDifferenceResult] = useState<{
     days: number;
     weeks: number;
@@ -125,35 +140,35 @@ export default function Home() {
     months?: number;
     days?: number;
   } | null>(null);
+  const [pregnancyDueDateResult, setPregnancyDueDateResult] = useState<Date | null>(null); // State for pregnancy due date
   const [currentDate, setCurrentDate] = useState<Date | null>(null);
 
-   // Set current date on client mount to avoid hydration issues
+   // Set current date on client mount
    useEffect(() => {
     setCurrentDate(new Date());
    }, []);
 
-  // Date Difference Form
+  // --- Forms ---
+
   const dateDifferenceForm = useForm<DateDifferenceValues>({
     resolver: zodResolver(dateDifferenceSchema),
-    mode: 'onChange', // Trigger validation on change
+    mode: 'onChange',
     defaultValues: {
       startDate: undefined,
       endDate: undefined,
     }
   });
 
-  // Date Arithmetic Form
   const dateArithmeticForm = useForm<DateArithmeticValues>({
     resolver: zodResolver(dateArithmeticSchema),
-    mode: 'onChange', // Trigger validation on change for button state
+    mode: 'onChange',
     defaultValues: {
-      operation: "add", // Default operation
+      operation: "add",
       baseDate: undefined,
       days: undefined,
     },
   });
 
-   // Age Finder Form
    const ageFinderForm = useForm<AgeFinderValues>({
     resolver: zodResolver(ageFinderSchema),
     mode: 'onChange',
@@ -162,10 +177,18 @@ export default function Home() {
     }
    });
 
-  // Handlers
-  const handleDateDifferenceSubmit: SubmitHandler<DateDifferenceValues> = (
-    data
-  ) => {
+   // Pregnancy Due Date Form
+   const pregnancyDueDateForm = useForm<PregnancyDueDateValues>({
+       resolver: zodResolver(pregnancyDueDateSchema),
+       mode: 'onChange',
+       defaultValues: {
+           lastMenstrualPeriod: undefined,
+       }
+   });
+
+  // --- Handlers ---
+
+  const handleDateDifferenceSubmit: SubmitHandler<DateDifferenceValues> = (data) => {
     const { startDate, endDate } = data;
     const days = differenceInDays(endDate, startDate);
     const weeks = differenceInWeeks(endDate, startDate);
@@ -174,25 +197,23 @@ export default function Home() {
     setDateDifferenceResult({ days, weeks, months, years });
     setArithmeticResult(null);
     setArithmeticOperation(null);
-    setAgeResult(null); // Clear age result
+    setAgeResult(null);
+    setPregnancyDueDateResult(null); // Clear pregnancy due date result
   };
 
-  // Updated handler for Date Arithmetic form submission
-  const handleDateArithmeticSubmit: SubmitHandler<DateArithmeticValues> = (
-    data
-  ) => {
+  const handleDateArithmeticSubmit: SubmitHandler<DateArithmeticValues> = (data) => {
     const { baseDate, days, operation } = data;
     const resultDate =
       operation === "add"
         ? addDays(baseDate, days)
         : subDays(baseDate, days);
     setArithmeticResult(resultDate);
-    setArithmeticOperation(operation); // Set the operation type for display
-    setDateDifferenceResult(null); // Clear other result
-    setAgeResult(null); // Clear age result
+    setArithmeticOperation(operation);
+    setDateDifferenceResult(null);
+    setAgeResult(null);
+    setPregnancyDueDateResult(null); // Clear pregnancy due date result
   };
 
-  // Handler for Age Finder form submission
   const handleAgeFinderSubmit: SubmitHandler<AgeFinderValues> = (data) => {
     const { dateOfBirth } = data;
     if (currentDate) {
@@ -201,13 +222,29 @@ export default function Home() {
         setDateDifferenceResult(null);
         setArithmeticResult(null);
         setArithmeticOperation(null);
+        setPregnancyDueDateResult(null); // Clear pregnancy due date result
     }
   };
 
+  // Handler for Pregnancy Due Date form submission
+  const handlePregnancyDueDateSubmit: SubmitHandler<PregnancyDueDateValues> = (data) => {
+      const { lastMenstrualPeriod } = data;
+      // Naegele's Rule: LMP + 1 year - 3 months + 7 days
+      let dueDate = addYears(lastMenstrualPeriod, 1);
+      dueDate = subMonths(dueDate, 3);
+      dueDate = addDays(dueDate, 7);
+      setPregnancyDueDateResult(dueDate);
+      setDateDifferenceResult(null);
+      setArithmeticResult(null);
+      setArithmeticOperation(null);
+      setAgeResult(null);
+  };
+
+  // --- Render ---
 
   return (
      <main className="flex min-h-screen justify-center p-4 bg-background">
-      <div className="flex w-full max-w-7xl justify-center gap-8"> {/* Increased max-width and added gap */}
+      <div className="flex w-full max-w-7xl justify-center gap-8">
 
         {/* Left Ad Placeholder */}
         <aside className="hidden lg:block w-40 flex-shrink-0 sticky top-4 h-fit">
@@ -216,12 +253,12 @@ export default function Home() {
 
         {/* Main Content Card */}
         <Card className="w-full max-w-2xl shadow-lg flex-grow">
-           <CardHeader className="text-center px-6 pt-6 pb-4"> {/* Reduced padding-bottom */}
-            <CardTitle className="text-2xl font-bold text-primary"> {/* Reduced font size */}
+           <CardHeader className="text-center px-6 pt-6 pb-4">
+            <CardTitle className="text-2xl font-bold text-primary">
               Date-Arithmetic Boss
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-8 pt-4"> {/* Adjusted top padding */}
+          <CardContent className="space-y-8 pt-4">
             {/* Date Difference Section */}
             <div>
                <h3 className="text-xl font-semibold mb-4 text-center">Date Difference</h3>
@@ -245,7 +282,7 @@ export default function Home() {
                                   onChange={field.onChange}
                                   calendarProps={{
                                       disabled: (date) =>
-                                        date > new Date("2200-01-01") || date < new Date("1900-01-01"), // Allow future dates, keep past limit
+                                        date > new Date("2200-01-01") || date < new Date("1900-01-01"),
                                   }}
                                   placeholder="mm/dd/yyyy"
                                 />
@@ -266,7 +303,7 @@ export default function Home() {
                                     onChange={field.onChange}
                                     calendarProps={{
                                         disabled: (date) =>
-                                        date < (dateDifferenceForm.getValues("startDate") || new Date("1900-01-01")) || date > new Date("2200-01-01"), // Allow future dates, ensure it's after start date
+                                        date < (dateDifferenceForm.getValues("startDate") || new Date("1900-01-01")) || date > new Date("2200-01-01"), // Allow future dates
                                     }}
                                     placeholder="mm/dd/yyyy"
                                 />
@@ -304,10 +341,9 @@ export default function Home() {
                <h3 className="text-xl font-semibold mb-4 text-center">Date Arithmetic</h3>
                 <Form {...dateArithmeticForm}>
                   <form
-                    onSubmit={dateArithmeticForm.handleSubmit(handleDateArithmeticSubmit)} // Use onSubmit on the form
+                    onSubmit={dateArithmeticForm.handleSubmit(handleDateArithmeticSubmit)}
                     className="space-y-6"
                   >
-                    {/* Fields stacked vertically */}
                     <div className="grid grid-cols-1 gap-4">
                        <FormField
                           control={dateArithmeticForm.control}
@@ -321,7 +357,7 @@ export default function Home() {
                                       onChange={field.onChange}
                                       calendarProps={{
                                           disabled: (date) =>
-                                            date < new Date("1900-01-01") || date > new Date("2200-01-01"), // Allow future dates for arithmetic
+                                            date < new Date("1900-01-01") || date > new Date("2200-01-01"),
                                       }}
                                       placeholder="mm/dd/yyyy"
                                   />
@@ -331,7 +367,6 @@ export default function Home() {
                           )}
                         />
 
-                       {/* New Select Field for Operation */}
                        <FormField
                          control={dateArithmeticForm.control}
                          name="operation"
@@ -345,8 +380,8 @@ export default function Home() {
                                  </SelectTrigger>
                                </FormControl>
                                <SelectContent>
-                                 <SelectItem value="add">Add</SelectItem>
-                                 <SelectItem value="subtract">Subtract</SelectItem>
+                                 <SelectItem value="add">Add Days</SelectItem>
+                                 <SelectItem value="subtract">Subtract Days</SelectItem>
                                </SelectContent>
                              </Select>
                              <FormMessage />
@@ -369,11 +404,10 @@ export default function Home() {
                         />
                     </div>
 
-                    {/* Single Calculate Button */}
                     <Button
                       type="submit"
                       className="w-full bg-accent hover:bg-accent/90"
-                      disabled={!dateArithmeticForm.formState.isValid || dateArithmeticForm.formState.isSubmitting} // Disable if form invalid or submitting
+                      disabled={!dateArithmeticForm.formState.isValid || dateArithmeticForm.formState.isSubmitting}
                     >
                       <CalendarDays className="mr-2 h-4 w-4" /> Calculate New Date
                     </Button>
@@ -388,7 +422,7 @@ export default function Home() {
                     <CardContent>
                        <ResultDisplay
                           title={`${arithmeticOperation === 'add' ? 'New Date (Added)' : 'New Date (Subtracted)'}`}
-                          value={format(arithmeticResult, 'PPP')} // Use a more readable format like 'MMM d, yyyy'
+                          value={format(arithmeticResult, 'PPP')}
                           unit=""
                         />
                     </CardContent>
@@ -419,10 +453,10 @@ export default function Home() {
                               onChange={field.onChange}
                               calendarProps={{
                                 disabled: (date) =>
-                                  date > (currentDate || new Date()) || date < new Date("1900-01-01"), // Disable future dates and very old dates
-                                 captionLayout: "dropdown-buttons", // Add year/month dropdowns
-                                 fromYear: 1900, // Set earliest year
-                                 toYear: currentDate ? currentDate.getFullYear() : new Date().getFullYear(), // Set latest year to current year
+                                  date > (currentDate || new Date()) || date < new Date("1900-01-01"),
+                                 captionLayout: "dropdown-buttons",
+                                 fromYear: 1900,
+                                 toYear: currentDate ? currentDate.getFullYear() : new Date().getFullYear(),
                               }}
                               placeholder="mm/dd/yyyy"
                             />
@@ -453,6 +487,66 @@ export default function Home() {
 
             </div>
 
+            <Separator className="my-8" /> {/* Added Separator */}
+
+            {/* Estimate Pregnancy Due Date Section */}
+            <div>
+              <h3 className="text-xl font-semibold mb-4 text-center">Estimate Pregnancy Due Date</h3>
+              <Form {...pregnancyDueDateForm}>
+                <form
+                  onSubmit={pregnancyDueDateForm.handleSubmit(handlePregnancyDueDateSubmit)}
+                  className="space-y-6"
+                >
+                  <div className="grid grid-cols-1 gap-4">
+                    <FormField
+                      control={pregnancyDueDateForm.control}
+                      name="lastMenstrualPeriod"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-col">
+                          <FormLabel>First Day of Last Menstrual Period (LMP)</FormLabel>
+                          <FormControl>
+                            <DateInput
+                              value={field.value}
+                              onChange={field.onChange}
+                              calendarProps={{
+                                disabled: (date) =>
+                                  date > (currentDate || new Date()) || date < subYears(new Date(), 2), // Disable future dates and dates older than 2 years
+                                captionLayout: "dropdown-buttons",
+                                fromYear: currentDate ? currentDate.getFullYear() - 2 : new Date().getFullYear() - 2, // Start 2 years ago
+                                toYear: currentDate ? currentDate.getFullYear() : new Date().getFullYear(), // End at current year
+                              }}
+                              placeholder="mm/dd/yyyy"
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  <Button type="submit" className="w-full bg-accent hover:bg-accent/90" disabled={!pregnancyDueDateForm.formState.isValid || pregnancyDueDateForm.formState.isSubmitting || !currentDate}>
+                    <Baby className="mr-2 h-4 w-4" /> Estimate Due Date
+                  </Button>
+                </form>
+              </Form>
+
+              {pregnancyDueDateResult && (
+                <Card className="mt-6 bg-secondary border-border">
+                  <CardHeader>
+                    <CardTitle className="text-xl">Estimated Due Date</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <ResultDisplay
+                      title="Due Date"
+                      value={format(pregnancyDueDateResult, 'PPP')} // e.g., Jun 20, 2024
+                      unit=""
+                    />
+                     <p className="text-xs text-muted-foreground mt-2">Note: This is an estimate based on Naegele's rule. Consult your healthcare provider for confirmation.</p>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+
+
           </CardContent>
         </Card>
 
@@ -465,3 +559,5 @@ export default function Home() {
     </main>
   );
 }
+
+    

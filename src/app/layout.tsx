@@ -3,6 +3,7 @@ import type {Metadata} from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster'; // Import Toaster
+import { subYears } from 'date-fns'; // Import subYears
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -15,8 +16,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'Date-Arithmetic Boss', // Update title
-  description: 'Calculate date differences and perform date arithmetic easily.', // Update description
+  title: 'Date-Arithmetic Boss',
+  description: 'Calculate date differences, perform date arithmetic, find age, and estimate pregnancy due date easily.', // Updated description
 };
 
 export default function RootLayout({
@@ -31,9 +32,10 @@ export default function RootLayout({
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         {children}
-        <Toaster /> {/* Add Toaster */}
+        <Toaster />
       </body>
     </html>
   );
 }
 
+    
