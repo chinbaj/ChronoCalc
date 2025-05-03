@@ -520,8 +520,8 @@ export default function Home() {
                                       value={field.value}
                                       onChange={field.onChange}
                                       calendarProps={{
-                                          disabled: (date) =>
-                                          date < (dateDifferenceForm.getValues("startDate") || new Date("1900-01-01")) || date > new Date("2200-01-01"),
+                                           disabled: (date) =>
+                                            date < (dateDifferenceForm.getValues("startDate") || new Date("1900-01-01")) || date > new Date("2200-01-01"),
                                       }}
                                       placeholder="mm/dd/yyyy"
                                       suppressHydrationWarning
@@ -544,7 +544,7 @@ export default function Home() {
                   {dateDifferenceResult && (
                     <Alert className="mt-6" aria-live="polite" aria-atomic="true">
                         <AlertTitle className="text-xl">Difference Result</AlertTitle>
-                        <AlertDescription asChild>
+                        <AlertDescription>
                              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 mt-2">
                                <ResultDisplay title="Years" value={dateDifferenceResult.years} unit="years" />
                                <ResultDisplay title="Months" value={dateDifferenceResult.months} unit="months" />
@@ -654,7 +654,7 @@ export default function Home() {
                   {arithmeticResult && arithmeticOperation && (
                      <Alert className="mt-6" aria-live="polite" aria-atomic="true"> {/* Announce results */}
                       <AlertTitle className="text-xl">Arithmetic Result</AlertTitle>
-                      <AlertDescription asChild>
+                      <AlertDescription>
                           <div className="mt-2">
                              <ResultDisplay
                                 title={`${arithmeticOperation === 'add' ? 'New Date (Added)' : 'New Date (Subtracted)'}`}
@@ -717,7 +717,7 @@ export default function Home() {
                 {ageResult && (
                     <Alert className="mt-6" aria-live="polite" aria-atomic="true"> {/* Announce results */}
                       <AlertTitle className="text-xl">Age Result</AlertTitle>
-                      <AlertDescription asChild>
+                      <AlertDescription>
                           <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 mt-2">
                             <ResultDisplay title="Years" value={ageResult.years ?? 0} unit="years" />
                             <ResultDisplay title="Months" value={ageResult.months ?? 0} unit="months" />
@@ -954,7 +954,7 @@ export default function Home() {
                 {pregnancyDueDateResult && (
                   <Alert className="mt-6" aria-live="polite" aria-atomic="true"> {/* Announce results */}
                     <AlertTitle className="text-xl">Estimated Due Date</AlertTitle>
-                    <AlertDescription asChild>
+                    <AlertDescription>
                         <div className="mt-2 space-y-2">
                             <ResultDisplay
                                 title="Due Date"
@@ -984,5 +984,6 @@ export default function Home() {
     </main>
   );
 }
+
 
 
