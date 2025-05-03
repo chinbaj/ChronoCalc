@@ -11,12 +11,12 @@ import {
   differenceInWeeks,
   differenceInYears,
   format,
-  subDays,
-  subMonths, // Added for pregnancy calculation
-  subYears,
   isValid,
   intervalToDuration,
   isBefore, // Used for conception date validation
+  subDays,
+  subMonths, // Added for pregnancy calculation
+  subYears,
 } from "date-fns";
 import { z } from "zod";
 import { useForm, type SubmitHandler } from "react-hook-form";
@@ -346,6 +346,14 @@ export default function Home() {
       setAgeResult(null);
   };
 
+  // Handler to scroll to a specific section
+  const scrollToSection = (id: string) => {
+    const element = document.getElementById(id);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
+
   // --- Render ---
 
   return (
@@ -369,17 +377,17 @@ export default function Home() {
                         </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="start">
-                        <DropdownMenuItem asChild>
-                            <a href="#date-difference">Date Difference</a>
+                        <DropdownMenuItem onSelect={() => scrollToSection('date-difference')}>
+                            Date Difference
                         </DropdownMenuItem>
-                        <DropdownMenuItem asChild>
-                            <a href="#date-arithmetic">Date Arithmetic</a>
+                        <DropdownMenuItem onSelect={() => scrollToSection('date-arithmetic')}>
+                            Date Arithmetic
                         </DropdownMenuItem>
-                        <DropdownMenuItem asChild>
-                            <a href="#find-age">Find Age</a>
+                        <DropdownMenuItem onSelect={() => scrollToSection('find-age')}>
+                            Find Age
                         </DropdownMenuItem>
-                        <DropdownMenuItem asChild>
-                            <a href="#estimate-due-date">Estimate Due Date</a>
+                        <DropdownMenuItem onSelect={() => scrollToSection('estimate-due-date')}>
+                            Estimate Due Date
                         </DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>
