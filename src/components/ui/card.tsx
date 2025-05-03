@@ -1,3 +1,4 @@
+
 import * as React from "react"
 
 import { cn } from "@/lib/utils"
@@ -29,11 +30,16 @@ const CardHeader = React.forwardRef<
 ))
 CardHeader.displayName = "CardHeader"
 
+// Allow CardTitle to render as a different element (e.g., h1)
+interface CardTitleProps extends React.HTMLAttributes<HTMLHeadingElement> {
+  as?: React.ElementType;
+}
+
 const CardTitle = React.forwardRef<
-  HTMLParagraphElement, // Changed to HTMLParagraphElement to match semantic usage
-  React.HTMLAttributes<HTMLHeadingElement> // Changed to HTMLHeadingElement for semantic correctness
->(({ className, ...props }, ref) => (
-  <h2 // Changed div to h2 for semantic title
+  HTMLParagraphElement, // Keep original ref type for compatibility if needed
+  CardTitleProps
+>(({ className, as: Component = 'h2', ...props }, ref) => (
+  <Component // Use the dynamic Component
     ref={ref}
     className={cn(
       "text-2xl font-semibold leading-none tracking-tight", // Kept original size, change in page.tsx
@@ -43,6 +49,7 @@ const CardTitle = React.forwardRef<
   />
 ))
 CardTitle.displayName = "CardTitle"
+
 
 const CardDescription = React.forwardRef<
   HTMLParagraphElement,

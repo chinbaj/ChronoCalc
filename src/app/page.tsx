@@ -466,7 +466,8 @@ export default function Home() {
             </div>
 
              <CardHeader className="text-center px-6 pt-6 pb-4">
-              <CardTitle className="text-2xl font-bold text-primary mt-6">
+              {/* Changed to h1 for main page title */}
+              <CardTitle as="h1" className="text-2xl font-bold text-primary mt-6">
                 Date-Arithmetic Boss
               </CardTitle>
             </CardHeader>
@@ -543,8 +544,8 @@ export default function Home() {
 
                   {dateDifferenceResult && (
                     <Alert className="mt-6" aria-live="polite" aria-atomic="true">
-                        <AlertTitle className="text-xl">Difference Result</AlertTitle>
-                        <AlertDescription>
+                        <AlertTitle className="text-lg font-semibold">Difference Result</AlertTitle>
+                        <AlertDescription asChild>
                              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 mt-2">
                                <ResultDisplay title="Years" value={dateDifferenceResult.years} unit="years" />
                                <ResultDisplay title="Months" value={dateDifferenceResult.months} unit="months" />
@@ -653,8 +654,8 @@ export default function Home() {
 
                   {arithmeticResult && arithmeticOperation && (
                      <Alert className="mt-6" aria-live="polite" aria-atomic="true"> {/* Announce results */}
-                      <AlertTitle className="text-xl">Arithmetic Result</AlertTitle>
-                      <AlertDescription>
+                      <AlertTitle className="text-lg font-semibold">Arithmetic Result</AlertTitle>
+                      <AlertDescription asChild>
                           <div className="mt-2">
                              <ResultDisplay
                                 title={`${arithmeticOperation === 'add' ? 'New Date (Added)' : 'New Date (Subtracted)'}`}
@@ -716,8 +717,8 @@ export default function Home() {
 
                 {ageResult && (
                     <Alert className="mt-6" aria-live="polite" aria-atomic="true"> {/* Announce results */}
-                      <AlertTitle className="text-xl">Age Result</AlertTitle>
-                      <AlertDescription>
+                      <AlertTitle className="text-lg font-semibold">Age Result</AlertTitle>
+                      <AlertDescription asChild>
                           <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 mt-2">
                             <ResultDisplay title="Years" value={ageResult.years ?? 0} unit="years" />
                             <ResultDisplay title="Months" value={ageResult.months ?? 0} unit="months" />
@@ -953,8 +954,8 @@ export default function Home() {
 
                 {pregnancyDueDateResult && (
                   <Alert className="mt-6" aria-live="polite" aria-atomic="true"> {/* Announce results */}
-                    <AlertTitle className="text-xl">Estimated Due Date</AlertTitle>
-                    <AlertDescription>
+                    <AlertTitle className="text-lg font-semibold">Estimated Due Date</AlertTitle>
+                    <AlertDescription asChild>
                         <div className="mt-2 space-y-2">
                             <ResultDisplay
                                 title="Due Date"
@@ -984,6 +985,3 @@ export default function Home() {
     </main>
   );
 }
-
-
-
