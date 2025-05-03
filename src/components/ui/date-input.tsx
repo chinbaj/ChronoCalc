@@ -30,6 +30,7 @@ const DateInput = React.forwardRef<HTMLInputElement, DateInputProps>(
   ) => {
     const [inputValue, setInputValue] = React.useState<string>("");
     const [isPopoverOpen, setIsPopoverOpen] = React.useState(false);
+    const inputId = React.useId(); // Generate unique ID for linking
 
     // Update input value when the external value changes
     React.useEffect(() => {
@@ -94,12 +95,17 @@ const DateInput = React.forwardRef<HTMLInputElement, DateInputProps>(
       <div className={cn("relative flex items-center", className)}>
         <Input
           ref={ref}
+          id={inputId} // Associate input with the label via id
           type="text"
           value={inputValue}
           onChange={handleInputChange}
           onBlur={handleInputBlur}
           placeholder={placeholder ?? dateFormat.toUpperCase()}
-          className="pr-10" // Add padding to make space for the button
+          className="pr-10"
+          aria-describedby={props['aria-describedby']} // Pass through describedby for form messages
+          aria-invalid={props['aria-invalid']} // Pass through invalid state
+          aria-required={props['aria-required']} // Pass through required state
+          suppressHydrationWarning // Keep this
           {...props}
         />
         <Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
@@ -108,15 +114,16 @@ const DateInput = React.forwardRef<HTMLInputElement, DateInputProps>(
               variant="ghost"
               size="icon"
               className="absolute right-1 h-7 w-7 text-muted-foreground hover:text-foreground"
-              aria-label="Open calendar"
+              aria-label={`Open calendar for ${props['aria-label'] || 'date input'}`} // Provide specific label
+              aria-controls={isPopoverOpen ? `${inputId}-calendar` : undefined} // Control the calendar popover
             >
-              <CalendarIcon className="h-4 w-4" />
+              <CalendarIcon className="h-4 w-4" aria-hidden="true" />
             </Button>
           </PopoverTrigger>
-          <PopoverContent className="w-auto p-0" align="start">
+          <PopoverContent id={`${inputId}-calendar`} className="w-auto p-0" align="start">
             <Calendar
               mode="single"
-              selected={value ?? undefined} // Ensure Calendar gets Date or undefined
+              selected={value ?? undefined}
               onSelect={handleDateSelect}
               initialFocus
               {...calendarProps}
