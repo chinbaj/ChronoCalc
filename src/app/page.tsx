@@ -21,7 +21,7 @@ import {
 import { z } from "zod";
 import { useForm, type SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { CalendarDays, Cake, Baby, Info } from "lucide-react"; // Added Baby and Info icons
+import { CalendarDays, Cake, Baby, Info, Menu } from "lucide-react"; // Added Baby, Info, and Menu icons
 
 import { Button } from "@/components/ui/button";
 import {
@@ -57,6 +57,12 @@ import {
     TooltipProvider,
     TooltipTrigger,
 } from "@/components/ui/tooltip"; // Import Tooltip components
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"; // Import DropdownMenu components
 
 // --- Schemas ---
 
@@ -274,15 +280,17 @@ export default function Home() {
 
   const handleDateDifferenceSubmit: SubmitHandler<DateDifferenceValues> = (data) => {
     const { startDate, endDate } = data;
-    const days = differenceInDays(endDate, startDate);
-    const weeks = differenceInWeeks(endDate, startDate);
-    const months = differenceInMonths(endDate, startDate);
-    const years = differenceInYears(endDate, startDate);
-    setDateDifferenceResult({ days, weeks, months, years });
-    setArithmeticResult(null);
-    setArithmeticOperation(null);
-    setAgeResult(null);
-    setPregnancyDueDateResult(null); // Clear pregnancy due date result
+    if (startDate && endDate) { // Ensure dates are valid
+        const days = differenceInDays(endDate, startDate);
+        const weeks = differenceInWeeks(endDate, startDate);
+        const months = differenceInMonths(endDate, startDate);
+        const years = differenceInYears(endDate, startDate);
+        setDateDifferenceResult({ days, weeks, months, years });
+        setArithmeticResult(null);
+        setArithmeticOperation(null);
+        setAgeResult(null);
+        setPregnancyDueDateResult(null); // Clear pregnancy due date result
+    }
   };
 
   const handleDateArithmeticSubmit: SubmitHandler<DateArithmeticValues> = (data) => {
@@ -308,7 +316,7 @@ export default function Home() {
 
   const handleAgeFinderSubmit: SubmitHandler<AgeFinderValues> = (data) => {
     const { dateOfBirth } = data;
-    if (currentDate) {
+    if (currentDate && dateOfBirth) { // Ensure dates are valid
         const duration = intervalToDuration({ start: dateOfBirth, end: currentDate });
         setAgeResult(duration);
         setDateDifferenceResult(null);
@@ -351,15 +359,41 @@ export default function Home() {
 
         {/* Main Content Card - Wrapped with TooltipProvider */}
         <TooltipProvider>
-          <Card className="w-full max-w-2xl shadow-lg flex-grow">
+          <Card className="w-full max-w-2xl shadow-lg flex-grow relative"> {/* Added relative positioning */}
+            {/* Navigation Dropdown */}
+            <div className="absolute top-2 left-2 z-10">
+                <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" aria-label="Navigation Menu">
+                            <Menu className="h-5 w-5" />
+                        </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="start">
+                        <DropdownMenuItem asChild>
+                            <a href="#date-difference">Date Difference</a>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                            <a href="#date-arithmetic">Date Arithmetic</a>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                            <a href="#find-age">Find Age</a>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                            <a href="#estimate-due-date">Estimate Due Date</a>
+                        </DropdownMenuItem>
+                    </DropdownMenuContent>
+                </DropdownMenu>
+            </div>
+
              <CardHeader className="text-center px-6 pt-6 pb-4"> {/* Reduced bottom padding */}
-              <CardTitle className="text-2xl font-bold text-primary">
+              <CardTitle className="text-2xl font-bold text-primary mt-6"> {/* Added top margin */}
                 Date-Arithmetic Boss
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-8 pt-4"> {/* Reduced top padding */}
+
               {/* Date Difference Section */}
-              <div>
+              <div id="date-difference">
                  <h3 className="text-xl font-semibold mb-4 text-center">Date Difference</h3>
                   <Form {...dateDifferenceForm}>
                     <form
@@ -438,7 +472,7 @@ export default function Home() {
               <Separator className="my-8" />
 
                {/* Date Arithmetic Section */}
-               <div>
+               <div id="date-arithmetic">
                  <h3 className="text-xl font-semibold mb-4 text-center">Date Arithmetic</h3>
                   <Form {...dateArithmeticForm}>
                     <form
@@ -536,7 +570,7 @@ export default function Home() {
               <Separator className="my-8" />
 
               {/* Find Age Section */}
-              <div>
+              <div id="find-age">
                 <h3 className="text-xl font-semibold mb-4 text-center">Find Age</h3>
                 <Form {...ageFinderForm}>
                   <form
@@ -594,7 +628,7 @@ export default function Home() {
               <Separator className="my-8" /> {/* Added Separator */}
 
               {/* Estimate Pregnancy Due Date Section */}
-              <div>
+              <div id="estimate-due-date">
                 <h3 className="text-xl font-semibold mb-4 text-center">Estimate Pregnancy Due Date</h3>
                 <Form {...pregnancyDueDateForm}>
                   <form
@@ -748,3 +782,4 @@ export default function Home() {
     </main>
   );
 }
+
