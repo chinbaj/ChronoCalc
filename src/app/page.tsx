@@ -758,7 +758,8 @@ export default function Home() {
                                        IVF Transfer Date
                                         <Tooltip>
                                             <TooltipTrigger asChild>
-                                                <FlaskConical className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
+                                                 {/* Changed FlaskConical to Info */}
+                                                <Info className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
                                             </TooltipTrigger>
                                             <TooltipContent side="top" align="start" className="max-w-xs">
                                                 <p className="text-sm">Calculate based on the date of embryo transfer during an IVF cycle.</p>
