@@ -1,3 +1,4 @@
+
 "use client";
 
 import type { DateRange } from "react-day-picker";
@@ -323,10 +324,8 @@ export default function Home() {
       let dueDate: Date | null = null;
 
       if (calculationMethod === 'lmp' && lastMenstrualPeriod && isValid(lastMenstrualPeriod)) {
-        // Naegele's Rule: LMP + 1 year - 3 months + 7 days
-        let tempDate = addYears(lastMenstrualPeriod, 1);
-        tempDate = subMonths(tempDate, 3);
-        dueDate = addDays(tempDate, 7);
+        // Naegele's Rule: LMP + 1 year - 3 months + 7 days (or LMP + 280 days)
+        dueDate = addDays(lastMenstrualPeriod, 280); // Simpler calculation
       } else if (calculationMethod === 'conception' && conceptionDate && isValid(conceptionDate)) {
         // Conception Date + 266 days
         dueDate = addDays(conceptionDate, 266);
@@ -618,8 +617,16 @@ export default function Home() {
                                  <FormControl>
                                    <RadioGroupItem value="lmp" />
                                  </FormControl>
-                                 <FormLabel className="font-normal">
+                                 <FormLabel className="font-normal flex items-center gap-1"> {/* Use flex and gap for icon */}
                                    Last Menstrual Period (LMP)
+                                   <Tooltip>
+                                     <TooltipTrigger asChild>
+                                       <Info className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
+                                     </TooltipTrigger>
+                                     <TooltipContent side="top" align="start" className="max-w-xs">
+                                       <p className="text-sm">Your LMP plus 280 days (40 weeks) is the most used method to estimate due date.</p>
+                                     </TooltipContent>
+                                   </Tooltip>
                                  </FormLabel>
                                </FormItem>
                                <FormItem className="flex items-center space-x-3 space-y-0">
