@@ -3,6 +3,7 @@
 
 import type { DateRange } from "react-day-picker";
 import { useState, type ReactNode, useEffect } from "react";
+import React from 'react'; // Import React
 import {
   addDays,
   addYears, // Added for pregnancy calculation
@@ -63,6 +64,11 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+    Alert,
+    AlertDescription,
+    AlertTitle,
+} from "@/components/ui/alert";
 
 // --- Schemas ---
 
@@ -379,19 +385,34 @@ export default function Home() {
       let dueDate: Date | null = null;
       let methodUsed: string = calculationMethod;
 
-      if (calculationMethod === 'lmp' && lastMenstrualPeriod && isValid(lastMenstrualPeriod)) {
-        dueDate = addDays(lastMenstrualPeriod, 280);
-        methodUsed = "LMP (Naegele's rule)";
-      } else if (calculationMethod === 'conception' && conceptionDate && isValid(conceptionDate)) {
-        dueDate = addDays(conceptionDate, 266);
-        methodUsed = "conception date";
-      } else if (calculationMethod === 'ivf' && ivfTransferDate && isValid(ivfTransferDate) && ivfEmbryoAge) {
-        const daysToAdd = ivfEmbryoAge === 'day3' ? 263 : 261;
-        dueDate = addDays(ivfTransferDate, daysToAdd);
-        methodUsed = `IVF transfer date (${ivfEmbryoAge === 'day3' ? 'Day-3' : 'Day-5'} embryo)`;
+      try {
+          if (calculationMethod === 'lmp' && lastMenstrualPeriod && isValid(lastMenstrualPeriod)) {
+            dueDate = addDays(lastMenstrualPeriod, 280);
+            methodUsed = "LMP (Naegele's rule)";
+          } else if (calculationMethod === 'conception' && conceptionDate && isValid(conceptionDate)) {
+            dueDate = addDays(conceptionDate, 266);
+            methodUsed = "conception date";
+          } else if (calculationMethod === 'ivf' && ivfTransferDate && isValid(ivfTransferDate) && ivfEmbryoAge) {
+            const daysToAdd = ivfEmbryoAge === 'day3' ? 263 : 261;
+            dueDate = addDays(ivfTransferDate, daysToAdd);
+            methodUsed = `IVF transfer date (${ivfEmbryoAge === 'day3' ? 'Day-3' : 'Day-5'} embryo)`;
+          }
+
+          if (dueDate && isValid(dueDate)) {
+             setPregnancyDueDateResult({ date: dueDate, method: methodUsed });
+          } else {
+             setPregnancyDueDateResult(null);
+             // Optionally show an error message if due date couldn't be calculated
+             console.error("Could not calculate valid due date.");
+          }
+      } catch (error) {
+          console.error("Error calculating due date:", error);
+          setPregnancyDueDateResult(null);
+          // Optionally show a generic error message to the user
       }
 
-      setPregnancyDueDateResult(dueDate ? { date: dueDate, method: methodUsed } : null);
+
+      // Clear other results regardless of success/failure
       setDateDifferenceResult(null);
       setArithmeticResult(null);
       setArithmeticOperation(null);
@@ -408,7 +429,7 @@ export default function Home() {
   // --- Render ---
 
   return (
-     <main className="flex min-h-screen justify-center p-4 bg-background">
+     <main className="flex min-h-screen justify-center p-4 bg-background" role="main">
       <div className="flex w-full max-w-7xl justify-center gap-8">
 
         {/* Left Ad Placeholder */}
@@ -453,7 +474,7 @@ export default function Home() {
 
               {/* Date Difference Section */}
               <section id="date-difference" aria-labelledby="date-difference-heading">
-                 <h3 id="date-difference-heading" className="text-xl font-semibold mb-4 text-center">Date Difference</h3>
+                 <h2 id="date-difference-heading" className="text-xl font-semibold mb-4 text-center">Date Difference</h2>
                   <Form {...dateDifferenceForm}>
                     <form
                       onSubmit={dateDifferenceForm.handleSubmit(
@@ -468,7 +489,7 @@ export default function Home() {
                           name="startDate"
                           render={({ field }) => (
                             <FormItem className="flex flex-col">
-                              <FormLabel>Start Date</FormLabel>
+                              <FormLabel htmlFor={`${field.name}-input`}>Start Date</FormLabel>
                                <FormControl>
                                  <DateInput
                                     value={field.value}
@@ -480,6 +501,8 @@ export default function Home() {
                                     placeholder="mm/dd/yyyy"
                                     suppressHydrationWarning
                                     aria-required="true" // Mark as required for accessibility
+                                    id={`${field.name}-input`} // Add unique ID
+                                    aria-label="Start Date" // Add specific label
                                   />
                                </FormControl>
                               <FormMessage />
@@ -491,7 +514,7 @@ export default function Home() {
                           name="endDate"
                           render={({ field }) => (
                             <FormItem className="flex flex-col">
-                              <FormLabel>End Date</FormLabel>
+                              <FormLabel htmlFor={`${field.name}-input`}>End Date</FormLabel>
                               <FormControl>
                                   <DateInput
                                       value={field.value}
@@ -503,6 +526,8 @@ export default function Home() {
                                       placeholder="mm/dd/yyyy"
                                       suppressHydrationWarning
                                       aria-required="true" // Mark as required
+                                      id={`${field.name}-input`} // Add unique ID
+                                      aria-label="End Date" // Add specific label
                                   />
                                </FormControl>
                               <FormMessage />
@@ -517,17 +542,17 @@ export default function Home() {
                   </Form>
 
                   {dateDifferenceResult && (
-                    <Card className="mt-6 bg-secondary border-border" aria-live="polite" aria-atomic="true"> {/* Make results announced */}
-                      <CardHeader>
-                        <CardTitle className="text-xl">Difference Result</CardTitle>
-                      </CardHeader>
-                      <CardContent className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                        <ResultDisplay title="Years" value={dateDifferenceResult.years} unit="years" />
-                        <ResultDisplay title="Months" value={dateDifferenceResult.months} unit="months" />
-                        <ResultDisplay title="Weeks" value={dateDifferenceResult.weeks} unit="weeks" />
-                        <ResultDisplay title="Days" value={dateDifferenceResult.days} unit="days" />
-                      </CardContent>
-                    </Card>
+                    <Alert className="mt-6" aria-live="polite" aria-atomic="true">
+                        <AlertTitle className="text-xl">Difference Result</AlertTitle>
+                        <AlertDescription asChild>
+                             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 mt-2">
+                               <ResultDisplay title="Years" value={dateDifferenceResult.years} unit="years" />
+                               <ResultDisplay title="Months" value={dateDifferenceResult.months} unit="months" />
+                               <ResultDisplay title="Weeks" value={dateDifferenceResult.weeks} unit="weeks" />
+                               <ResultDisplay title="Days" value={dateDifferenceResult.days} unit="days" />
+                             </div>
+                        </AlertDescription>
+                    </Alert>
                   )}
               </section>
 
@@ -535,7 +560,7 @@ export default function Home() {
 
                {/* Date Arithmetic Section */}
                <section id="date-arithmetic" aria-labelledby="date-arithmetic-heading">
-                 <h3 id="date-arithmetic-heading" className="text-xl font-semibold mb-4 text-center">Date Arithmetic</h3>
+                 <h2 id="date-arithmetic-heading" className="text-xl font-semibold mb-4 text-center">Date Arithmetic</h2>
                   <Form {...dateArithmeticForm}>
                     <form
                       onSubmit={dateArithmeticForm.handleSubmit(handleDateArithmeticSubmit)}
@@ -547,7 +572,7 @@ export default function Home() {
                           name="baseDate"
                           render={({ field }) => (
                             <FormItem className="flex flex-col">
-                              <FormLabel>Date</FormLabel>
+                              <FormLabel htmlFor={`${field.name}-input`}>Date</FormLabel>
                                <FormControl>
                                   <DateInput
                                       value={field.value}
@@ -559,6 +584,8 @@ export default function Home() {
                                       placeholder="mm/dd/yyyy"
                                       suppressHydrationWarning
                                       aria-required="true"
+                                      id={`${field.name}-input`}
+                                      aria-label="Base Date"
                                   />
                                </FormControl>
                               <FormMessage />
@@ -574,7 +601,7 @@ export default function Home() {
                                <FormLabel>Operation</FormLabel>
                                <Select onValueChange={field.onChange} defaultValue={field.value} aria-required="true">
                                  <FormControl>
-                                   <SelectTrigger suppressHydrationWarning>
+                                   <SelectTrigger suppressHydrationWarning aria-label="Select Operation: Add or Subtract Days">
                                      <SelectValue placeholder="Select operation" />
                                    </SelectTrigger>
                                  </FormControl>
@@ -593,9 +620,21 @@ export default function Home() {
                           name="days"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>Number of Days</FormLabel>
+                              <FormLabel htmlFor={`${field.name}-input`}>Number of Days</FormLabel>
                               <FormControl>
-                                <Input type="number" placeholder="Enter number of days" {...field} onChange={e => field.onChange(e.target.value === '' ? undefined : +e.target.value)} value={field.value ?? ''} min="1" step="1" suppressHydrationWarning aria-required="true" />
+                                <Input
+                                    type="number"
+                                    placeholder="Enter number of days"
+                                    {...field}
+                                    onChange={e => field.onChange(e.target.value === '' ? undefined : +e.target.value)}
+                                    value={field.value ?? ''}
+                                    min="1"
+                                    step="1"
+                                    suppressHydrationWarning
+                                    aria-required="true"
+                                    id={`${field.name}-input`}
+                                    aria-label="Number of Days"
+                                />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
@@ -613,18 +652,18 @@ export default function Home() {
                   </Form>
 
                   {arithmeticResult && arithmeticOperation && (
-                     <Card className="mt-6 bg-secondary border-border" aria-live="polite" aria-atomic="true"> {/* Announce results */}
-                      <CardHeader>
-                        <CardTitle className="text-xl">Arithmetic Result</CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                         <ResultDisplay
-                            title={`${arithmeticOperation === 'add' ? 'New Date (Added)' : 'New Date (Subtracted)'}`}
-                            value={format(arithmeticResult, 'PPP')}
-                            unit=""
-                          />
-                      </CardContent>
-                    </Card>
+                     <Alert className="mt-6" aria-live="polite" aria-atomic="true"> {/* Announce results */}
+                      <AlertTitle className="text-xl">Arithmetic Result</AlertTitle>
+                      <AlertDescription asChild>
+                          <div className="mt-2">
+                             <ResultDisplay
+                                title={`${arithmeticOperation === 'add' ? 'New Date (Added)' : 'New Date (Subtracted)'}`}
+                                value={format(arithmeticResult, 'PPP')}
+                                unit=""
+                              />
+                          </div>
+                       </AlertDescription>
+                    </Alert>
                   )}
               </section>
 
@@ -632,7 +671,7 @@ export default function Home() {
 
               {/* Find Age Section */}
               <section id="find-age" aria-labelledby="find-age-heading">
-                <h3 id="find-age-heading" className="text-xl font-semibold mb-4 text-center">Find Age</h3>
+                <h2 id="find-age-heading" className="text-xl font-semibold mb-4 text-center">Find Age</h2>
                 <Form {...ageFinderForm}>
                   <form
                     onSubmit={ageFinderForm.handleSubmit(handleAgeFinderSubmit)}
@@ -645,21 +684,23 @@ export default function Home() {
                         name="dateOfBirth"
                         render={({ field }) => (
                           <FormItem className="flex flex-col">
-                            <FormLabel>Date of Birth</FormLabel>
+                            <FormLabel htmlFor={`${field.name}-input`}>Date of Birth</FormLabel>
                             <FormControl>
                               <DateInput
                                 value={field.value}
                                 onChange={field.onChange}
                                 calendarProps={{
                                   disabled: (date) =>
-                                    date > (currentDate || new Date()) || date < new Date("1900-01-01"),
+                                    date > (currentDate || new Date()) || date < subYears(new Date(), 150), // Limit to reasonable past date
                                    captionLayout: "dropdown-buttons",
-                                   fromYear: 1900,
+                                   fromYear: currentDate ? currentDate.getFullYear() - 150 : new Date().getFullYear() - 150,
                                    toYear: currentDate ? currentDate.getFullYear() : new Date().getFullYear(),
                                 }}
                                 placeholder="mm/dd/yyyy"
                                 suppressHydrationWarning
                                 aria-required="true"
+                                id={`${field.name}-input`}
+                                aria-label="Date of Birth"
                               />
                             </FormControl>
                             <FormMessage />
@@ -674,16 +715,16 @@ export default function Home() {
                 </Form>
 
                 {ageResult && (
-                    <Card className="mt-6 bg-secondary border-border" aria-live="polite" aria-atomic="true"> {/* Announce results */}
-                      <CardHeader>
-                        <CardTitle className="text-xl">Age Result</CardTitle>
-                      </CardHeader>
-                      <CardContent className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-                        <ResultDisplay title="Years" value={ageResult.years ?? 0} unit="years" />
-                        <ResultDisplay title="Months" value={ageResult.months ?? 0} unit="months" />
-                        <ResultDisplay title="Days" value={ageResult.days ?? 0} unit="days" />
-                      </CardContent>
-                    </Card>
+                    <Alert className="mt-6" aria-live="polite" aria-atomic="true"> {/* Announce results */}
+                      <AlertTitle className="text-xl">Age Result</AlertTitle>
+                      <AlertDescription asChild>
+                          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 mt-2">
+                            <ResultDisplay title="Years" value={ageResult.years ?? 0} unit="years" />
+                            <ResultDisplay title="Months" value={ageResult.months ?? 0} unit="months" />
+                            <ResultDisplay title="Days" value={ageResult.days ?? 0} unit="days" />
+                          </div>
+                      </AlertDescription>
+                    </Alert>
                   )}
 
               </section>
@@ -692,7 +733,7 @@ export default function Home() {
 
               {/* Estimate Pregnancy Due Date Section */}
               <section id="estimate-due-date" aria-labelledby="estimate-due-date-heading">
-                <h3 id="estimate-due-date-heading" className="text-xl font-semibold mb-4 text-center">Estimate Pregnancy Due Date</h3>
+                <h2 id="estimate-due-date-heading" className="text-xl font-semibold mb-4 text-center">Estimate Pregnancy Due Date</h2>
                 <Form {...pregnancyDueDateForm}>
                   <form
                     onSubmit={pregnancyDueDateForm.handleSubmit(handlePregnancyDueDateSubmit)}
@@ -704,7 +745,9 @@ export default function Home() {
                        name="calculationMethod"
                        render={({ field }) => (
                          <FormItem className="space-y-3">
-                           <FormLabel>Calculate based on:</FormLabel>
+                           <FormLabel asChild>
+                                <legend className={cn("text-sm font-medium leading-none", field.value ? "" : "text-destructive")}>Calculate based on:</legend>
+                           </FormLabel>
                            <FormControl>
                              <RadioGroup
                                onValueChange={(value) => {
@@ -721,10 +764,11 @@ export default function Home() {
                                 defaultValue={field.value}
                                 className="flex flex-col space-y-1 sm:flex-row sm:flex-wrap sm:space-y-0 sm:gap-x-4 sm:gap-y-2"
                                 aria-required="true"
+                                aria-labelledby="estimate-due-date-heading" // Group label
                              >
                                <FormItem className="flex items-center space-x-3 space-y-0">
                                  <FormControl>
-                                   <RadioGroupItem value="lmp" id="lmp" />
+                                   <RadioGroupItem value="lmp" id="lmp" aria-label="Last Menstrual Period"/>
                                  </FormControl>
                                  <FormLabel htmlFor="lmp" className="font-normal flex items-center gap-1 cursor-pointer">
                                    LMP
@@ -742,7 +786,7 @@ export default function Home() {
                                </FormItem>
                                <FormItem className="flex items-center space-x-3 space-y-0">
                                  <FormControl>
-                                   <RadioGroupItem value="conception" id="conception" />
+                                   <RadioGroupItem value="conception" id="conception" aria-label="Conception Date"/>
                                  </FormControl>
                                  <FormLabel htmlFor="conception" className="font-normal flex items-center gap-1 cursor-pointer">
                                    Conception Date
@@ -760,7 +804,7 @@ export default function Home() {
                                </FormItem>
                                <FormItem className="flex items-center space-x-3 space-y-0">
                                    <FormControl>
-                                       <RadioGroupItem value="ivf" id="ivf" />
+                                       <RadioGroupItem value="ivf" id="ivf" aria-label="IVF Transfer Date"/>
                                    </FormControl>
                                    <FormLabel htmlFor="ivf" className="font-normal flex items-center gap-1 cursor-pointer">
                                        IVF Transfer Date
@@ -771,7 +815,7 @@ export default function Home() {
                                                  </Button>
                                             </TooltipTrigger>
                                             <TooltipContent side="top" align="start" className="max-w-xs">
-                                                <p className="text-sm">Calculate based on the date of embryo transfer during an IVF cycle.</p>
+                                                <p className="text-sm">Calculate based on the date of embryo transfer during an In Vitro Fertilization (IVF) cycle.</p>
                                             </TooltipContent>
                                         </Tooltip>
                                    </FormLabel>
@@ -790,7 +834,7 @@ export default function Home() {
                          name="lastMenstrualPeriod"
                          render={({ field }) => (
                            <FormItem className="flex flex-col">
-                             <FormLabel>First Day of Last Menstrual Period (LMP)</FormLabel>
+                             <FormLabel htmlFor={`${field.name}-input`}>First Day of Last Menstrual Period (LMP)</FormLabel>
                              <FormControl>
                                <DateInput
                                  value={field.value}
@@ -805,6 +849,8 @@ export default function Home() {
                                  placeholder="mm/dd/yyyy"
                                  suppressHydrationWarning
                                  aria-required="true"
+                                 id={`${field.name}-input`}
+                                 aria-label="First Day of Last Menstrual Period"
                                />
                              </FormControl>
                              <FormMessage />
@@ -819,7 +865,7 @@ export default function Home() {
                          name="conceptionDate"
                          render={({ field }) => (
                            <FormItem className="flex flex-col">
-                             <FormLabel>Estimated Conception Date</FormLabel>
+                             <FormLabel htmlFor={`${field.name}-input`}>Estimated Conception Date</FormLabel>
                              <FormControl>
                                <DateInput
                                  value={field.value}
@@ -834,6 +880,8 @@ export default function Home() {
                                  placeholder="mm/dd/yyyy"
                                  suppressHydrationWarning
                                  aria-required="true"
+                                 id={`${field.name}-input`}
+                                 aria-label="Estimated Conception Date"
                                />
                              </FormControl>
                              <FormMessage />
@@ -849,7 +897,7 @@ export default function Home() {
                              name="ivfTransferDate"
                              render={({ field }) => (
                                <FormItem className="flex flex-col">
-                                 <FormLabel>Date of Transfer</FormLabel>
+                                 <FormLabel htmlFor={`${field.name}-input`}>Date of Transfer</FormLabel>
                                  <FormControl>
                                    <DateInput
                                      value={field.value}
@@ -864,6 +912,8 @@ export default function Home() {
                                      placeholder="mm/dd/yyyy"
                                      suppressHydrationWarning
                                      aria-required="true"
+                                     id={`${field.name}-input`}
+                                     aria-label="IVF Date of Transfer"
                                    />
                                  </FormControl>
                                  <FormMessage />
@@ -878,7 +928,7 @@ export default function Home() {
                                  <FormLabel>Embryo Age at Transfer</FormLabel>
                                  <Select onValueChange={field.onChange} defaultValue={field.value} aria-required="true">
                                    <FormControl>
-                                     <SelectTrigger suppressHydrationWarning>
+                                     <SelectTrigger suppressHydrationWarning aria-label="Select Embryo Age at Transfer">
                                        <SelectValue placeholder="Select embryo age" />
                                      </SelectTrigger>
                                    </FormControl>
@@ -902,21 +952,21 @@ export default function Home() {
                 </Form>
 
                 {pregnancyDueDateResult && (
-                  <Card className="mt-6 bg-secondary border-border" aria-live="polite" aria-atomic="true"> {/* Announce results */}
-                    <CardHeader>
-                      <CardTitle className="text-xl">Estimated Due Date</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <ResultDisplay
-                        title="Due Date"
-                        value={format(pregnancyDueDateResult.date, 'PPP')} // e.g., Jun 20, 2024
-                        unit=""
-                      />
-                       <p className="text-xs text-muted-foreground mt-2">
-                         Note: This is an estimate based on the {pregnancyDueDateResult.method}. Consult your healthcare provider for confirmation.
-                       </p>
-                    </CardContent>
-                  </Card>
+                  <Alert className="mt-6" aria-live="polite" aria-atomic="true"> {/* Announce results */}
+                    <AlertTitle className="text-xl">Estimated Due Date</AlertTitle>
+                    <AlertDescription asChild>
+                        <div className="mt-2 space-y-2">
+                            <ResultDisplay
+                                title="Due Date"
+                                value={format(pregnancyDueDateResult.date, 'PPP')} // e.g., Jun 20, 2024
+                                unit=""
+                            />
+                           <p className="text-xs text-muted-foreground">
+                             Note: This is an estimate based on the {pregnancyDueDateResult.method}. Consult your healthcare provider for confirmation.
+                           </p>
+                        </div>
+                     </AlertDescription>
+                  </Alert>
                 )}
               </section>
 
@@ -934,4 +984,5 @@ export default function Home() {
     </main>
   );
 }
+
 
