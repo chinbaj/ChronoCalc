@@ -633,7 +633,7 @@ export default function Home() {
                                            <Info className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
                                        </TooltipTrigger>
                                        <TooltipContent side="top" align="start" className="max-w-xs">
-                                           <p className="text-sm">If you have been tracking your Ovulation symptoms or using Ovulation strips, you might know your conception date. Adding 266 days to Conception date gives a good estimate of the baby's due date.</p>
+                                           <p className="text-sm">Your conception date plus 266 days gives a fairly good estimate of your due date.</p>
                                        </TooltipContent>
                                    </Tooltip>
                                  </FormLabel>
