@@ -21,7 +21,7 @@ import {
 import { z } from "zod";
 import { useForm, type SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { CalendarDays, Cake, Baby, Info, Menu } from "lucide-react"; // Added Baby, Info, and Menu icons
+import { CalendarDays, Cake, Baby, Info, Menu, FlaskConical } from "lucide-react"; // Added Baby, Info, Menu, FlaskConical icons
 
 import { Button } from "@/components/ui/button";
 import {
@@ -108,7 +108,7 @@ const ageFinderSchema = z.object({
 
 // Updated Schema for Pregnancy Due Date Form
 const pregnancyDueDateSchema = z.object({
-  calculationMethod: z.enum(['lmp', 'conception'], {
+  calculationMethod: z.enum(['lmp', 'conception', 'ivf'], { // Added 'ivf'
     required_error: "Please select a calculation method.",
   }),
   lastMenstrualPeriod: z.date({
@@ -116,6 +116,12 @@ const pregnancyDueDateSchema = z.object({
   }).optional(),
   conceptionDate: z.date({
     invalid_type_error: "Invalid date format.",
+  }).optional(),
+  ivfTransferDate: z.date({ // Added IVF transfer date
+    invalid_type_error: "Invalid date format.",
+  }).optional(),
+  ivfEmbryoAge: z.enum(['day3', 'day5'], { // Added IVF embryo age
+     errorMap: () => ({ message: 'Please select embryo age.' }), // Custom error message
   }).optional(),
 }).superRefine((data, ctx) => {
   const now = new Date();
@@ -177,6 +183,42 @@ const pregnancyDueDateSchema = z.object({
             path: ["conceptionDate"],
         });
     }
+  } else if (data.calculationMethod === 'ivf') { // Added IVF validation
+      if (!data.ivfTransferDate) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "IVF transfer date is required.",
+          path: ["ivfTransferDate"],
+        });
+      } else if (!isValid(data.ivfTransferDate)) {
+          ctx.addIssue({
+              code: z.ZodIssueCode.invalid_date,
+              message: "Invalid date.",
+              path: ["ivfTransferDate"],
+          });
+      } else if (isBefore(now, data.ivfTransferDate)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "IVF transfer date cannot be in the future.",
+          path: ["ivfTransferDate"],
+        });
+      }
+      // Check if transfer date is reasonably within the last 9 months
+      else if (isBefore(data.ivfTransferDate, nineMonthsAgo)) {
+          ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: "IVF transfer date seems too old.",
+              path: ["ivfTransferDate"],
+          });
+      }
+
+      if (!data.ivfEmbryoAge) {
+          ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: "Embryo age selection is required.",
+              path: ["ivfEmbryoAge"],
+          });
+      }
   }
 });
 
@@ -225,7 +267,7 @@ export default function Home() {
     months?: number;
     days?: number;
   } | null>(null);
-  const [pregnancyDueDateResult, setPregnancyDueDateResult] = useState<Date | null>(null); // State for pregnancy due date
+  const [pregnancyDueDateResult, setPregnancyDueDateResult] = useState<{date: Date, method: string} | null>(null); // Store date and method
   const [currentDate, setCurrentDate] = useState<Date | null>(null);
 
    // Set current date on client mount
@@ -270,6 +312,8 @@ export default function Home() {
            calculationMethod: 'lmp', // Default to LMP
            lastMenstrualPeriod: undefined,
            conceptionDate: undefined,
+           ivfTransferDate: undefined, // Added default
+           ivfEmbryoAge: undefined, // Start undefined
        }
    });
 
@@ -328,18 +372,26 @@ export default function Home() {
 
   // Updated Handler for Pregnancy Due Date form submission
   const handlePregnancyDueDateSubmit: SubmitHandler<PregnancyDueDateValues> = (data) => {
-      const { calculationMethod, lastMenstrualPeriod, conceptionDate } = data;
+      const { calculationMethod, lastMenstrualPeriod, conceptionDate, ivfTransferDate, ivfEmbryoAge } = data;
       let dueDate: Date | null = null;
+      let methodUsed: string = calculationMethod; // Track method for display
 
       if (calculationMethod === 'lmp' && lastMenstrualPeriod && isValid(lastMenstrualPeriod)) {
-        // Naegele's Rule: LMP + 1 year - 3 months + 7 days (or LMP + 280 days)
-        dueDate = addDays(lastMenstrualPeriod, 280); // Simpler calculation
+        // Naegele's Rule: LMP + 280 days
+        dueDate = addDays(lastMenstrualPeriod, 280);
+        methodUsed = "LMP (Naegele's rule)";
       } else if (calculationMethod === 'conception' && conceptionDate && isValid(conceptionDate)) {
         // Conception Date + 266 days
         dueDate = addDays(conceptionDate, 266);
+        methodUsed = "conception date";
+      } else if (calculationMethod === 'ivf' && ivfTransferDate && isValid(ivfTransferDate) && ivfEmbryoAge) {
+        // IVF calculation
+        const daysToAdd = ivfEmbryoAge === 'day3' ? 263 : 261;
+        dueDate = addDays(ivfTransferDate, daysToAdd);
+        methodUsed = `IVF transfer date (${ivfEmbryoAge === 'day3' ? 'Day-3' : 'Day-5'} embryo)`;
       }
 
-      setPregnancyDueDateResult(dueDate);
+      setPregnancyDueDateResult(dueDate ? { date: dueDate, method: methodUsed } : null);
       setDateDifferenceResult(null);
       setArithmeticResult(null);
       setArithmeticOperation(null);
@@ -377,16 +429,16 @@ export default function Home() {
                         </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="start">
-                        <DropdownMenuItem onSelect={() => scrollToSection('date-difference')}>
+                        <DropdownMenuItem onSelect={(e) => { e.preventDefault(); scrollToSection('date-difference'); }}>
                             Date Difference
                         </DropdownMenuItem>
-                        <DropdownMenuItem onSelect={() => scrollToSection('date-arithmetic')}>
+                        <DropdownMenuItem onSelect={(e) => { e.preventDefault(); scrollToSection('date-arithmetic'); }}>
                             Date Arithmetic
                         </DropdownMenuItem>
-                        <DropdownMenuItem onSelect={() => scrollToSection('find-age')}>
+                        <DropdownMenuItem onSelect={(e) => { e.preventDefault(); scrollToSection('find-age'); }}>
                             Find Age
                         </DropdownMenuItem>
-                        <DropdownMenuItem onSelect={() => scrollToSection('estimate-due-date')}>
+                        <DropdownMenuItem onSelect={(e) => { e.preventDefault(); scrollToSection('estimate-due-date'); }}>
                             Estimate Due Date
                         </DropdownMenuItem>
                     </DropdownMenuContent>
@@ -651,16 +703,27 @@ export default function Home() {
                            <FormLabel>Calculate based on:</FormLabel>
                            <FormControl>
                              <RadioGroup
-                               onValueChange={field.onChange}
-                               defaultValue={field.value}
-                               className="flex flex-col space-y-1 sm:flex-row sm:space-y-0 sm:space-x-4"
+                               onValueChange={(value) => {
+                                    field.onChange(value);
+                                    // Reset other fields when method changes
+                                    pregnancyDueDateForm.reset({
+                                        calculationMethod: value as 'lmp' | 'conception' | 'ivf',
+                                        lastMenstrualPeriod: undefined,
+                                        conceptionDate: undefined,
+                                        ivfTransferDate: undefined,
+                                        ivfEmbryoAge: undefined,
+                                    });
+                                    setPregnancyDueDateResult(null); // Clear previous results
+                                }}
+                                defaultValue={field.value}
+                                className="flex flex-col space-y-1 sm:flex-row sm:flex-wrap sm:space-y-0 sm:gap-x-4 sm:gap-y-2" // Use flex-wrap and gap
                              >
                                <FormItem className="flex items-center space-x-3 space-y-0">
                                  <FormControl>
-                                   <RadioGroupItem value="lmp" />
+                                   <RadioGroupItem value="lmp" id="lmp" />
                                  </FormControl>
-                                 <FormLabel className="font-normal flex items-center gap-1"> {/* Use flex and gap for icon */}
-                                   Last Menstrual Period (LMP)
+                                 <FormLabel htmlFor="lmp" className="font-normal flex items-center gap-1 cursor-pointer"> {/* Use flex and gap for icon */}
+                                   LMP
                                    <Tooltip>
                                      <TooltipTrigger asChild>
                                        <Info className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
@@ -673,9 +736,9 @@ export default function Home() {
                                </FormItem>
                                <FormItem className="flex items-center space-x-3 space-y-0">
                                  <FormControl>
-                                   <RadioGroupItem value="conception" />
+                                   <RadioGroupItem value="conception" id="conception" />
                                  </FormControl>
-                                 <FormLabel className="font-normal flex items-center gap-1"> {/* Use flex and gap for icon */}
+                                 <FormLabel htmlFor="conception" className="font-normal flex items-center gap-1 cursor-pointer"> {/* Use flex and gap for icon */}
                                    Conception Date
                                    <Tooltip>
                                        <TooltipTrigger asChild>
@@ -686,6 +749,22 @@ export default function Home() {
                                        </TooltipContent>
                                    </Tooltip>
                                  </FormLabel>
+                               </FormItem>
+                               <FormItem className="flex items-center space-x-3 space-y-0">
+                                   <FormControl>
+                                       <RadioGroupItem value="ivf" id="ivf" />
+                                   </FormControl>
+                                   <FormLabel htmlFor="ivf" className="font-normal flex items-center gap-1 cursor-pointer"> {/* Use flex and gap for icon */}
+                                       IVF Transfer Date
+                                        <Tooltip>
+                                            <TooltipTrigger asChild>
+                                                <FlaskConical className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
+                                            </TooltipTrigger>
+                                            <TooltipContent side="top" align="start" className="max-w-xs">
+                                                <p className="text-sm">Calculate based on the date of embryo transfer during an IVF cycle.</p>
+                                            </TooltipContent>
+                                        </Tooltip>
+                                   </FormLabel>
                                </FormItem>
                              </RadioGroup>
                            </FormControl>
@@ -751,6 +830,58 @@ export default function Home() {
                        />
                      )}
 
+                     {calculationMethod === 'ivf' && (
+                        <div className="space-y-6">
+                           <FormField
+                             control={pregnancyDueDateForm.control}
+                             name="ivfTransferDate"
+                             render={({ field }) => (
+                               <FormItem className="flex flex-col">
+                                 <FormLabel>Date of Transfer</FormLabel>
+                                 <FormControl>
+                                   <DateInput
+                                     value={field.value}
+                                     onChange={field.onChange}
+                                     calendarProps={{
+                                       disabled: (date) =>
+                                         date > (currentDate || new Date()) || date < subMonths(new Date(), 9), // Disable future dates and dates older than ~9 months
+                                       captionLayout: "dropdown-buttons",
+                                       fromYear: currentDate ? currentDate.getFullYear() - 1 : new Date().getFullYear() - 1, // Limit to past year
+                                       toYear: currentDate ? currentDate.getFullYear() : new Date().getFullYear(), // End at current year
+                                     }}
+                                     placeholder="mm/dd/yyyy"
+                                     suppressHydrationWarning
+                                   />
+                                 </FormControl>
+                                 <FormMessage />
+                               </FormItem>
+                             )}
+                           />
+                           <FormField
+                             control={pregnancyDueDateForm.control}
+                             name="ivfEmbryoAge"
+                             render={({ field }) => (
+                               <FormItem>
+                                 <FormLabel>Embryo Age at Transfer</FormLabel>
+                                 <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                   <FormControl>
+                                     <SelectTrigger suppressHydrationWarning>
+                                       <SelectValue placeholder="Select embryo age" />
+                                     </SelectTrigger>
+                                   </FormControl>
+                                   <SelectContent>
+                                     <SelectItem value="day3">Day-3 Embryo Transfer</SelectItem>
+                                     <SelectItem value="day5">Day-5 Embryo Transfer</SelectItem>
+                                   </SelectContent>
+                                 </Select>
+                                 <FormMessage />
+                               </FormItem>
+                             )}
+                           />
+                        </div>
+                     )}
+
+
                      <Button type="submit" className="w-full bg-accent hover:bg-accent/90" disabled={!pregnancyDueDateForm.formState.isValid || pregnancyDueDateForm.formState.isSubmitting || !currentDate}>
                       <Baby className="mr-2 h-4 w-4" /> Estimate Due Date
                      </Button>
@@ -765,11 +896,11 @@ export default function Home() {
                     <CardContent>
                       <ResultDisplay
                         title="Due Date"
-                        value={format(pregnancyDueDateResult, 'PPP')} // e.g., Jun 20, 2024
+                        value={format(pregnancyDueDateResult.date, 'PPP')} // e.g., Jun 20, 2024
                         unit=""
                       />
                        <p className="text-xs text-muted-foreground mt-2">
-                         Note: This is an estimate based on the {calculationMethod === 'lmp' ? "LMP (Naegele's rule)" : "conception date"}. Consult your healthcare provider for confirmation.
+                         Note: This is an estimate based on the {pregnancyDueDateResult.method}. Consult your healthcare provider for confirmation.
                        </p>
                     </CardContent>
                   </Card>
