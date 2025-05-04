@@ -16,16 +16,16 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'Date-Arithmetic Boss: Calculator for Dates, Age & Due Dates',
+  title: 'Date-Arithmetic Boss: Calculator for Dates, Age & Pregnancy Due Dates',
   description: 'Your go-to date calculator. Easily find the difference between two dates, add or subtract days, calculate age from date of birth, and estimate pregnancy due dates (LMP, Conception, IVF).',
   keywords: 'date calculator, date difference, date arithmetic, add days to date, subtract days from date, age calculator, pregnancy due date calculator, due date estimator, LMP calculator, conception date calculator, IVF due date calculator, time calculator',
   authors: [{ name: 'Date-Arithmetic Boss Team' }], // Optional: Add author info
   // Open Graph / Facebook
   openGraph: {
-    title: 'Date-Arithmetic Boss: Calculator for Dates, Age & Due Dates',
+    title: 'Date-Arithmetic Boss: Date Calculator for Date Difference, Add or Subtract days to or From a date, Find Age, Due Dates, etc.',
     description: 'Easily find date differences, add/subtract days, calculate age, and estimate pregnancy due dates.',
     type: 'website',
-    // url: 'YOUR_WEBSITE_URL', // Optional: Add your site's URL
+     url: 'https://date-calculator-boss.com/', // Optional: Add your site's URL
     // images: [ // Optional: Add an image URL for social sharing
     //   {
     //     url: 'YOUR_IMAGE_URL',
@@ -78,9 +78,10 @@ const jsonLd = {
     'Estimate pregnancy due date based on Last Menstrual Period (LMP)',
     'Estimate pregnancy due date based on Conception Date',
     'Estimate pregnancy due date based on IVF Transfer Date',
+    'Option to use in dark or light or system mode'
   ],
-  keywords: 'date calculator, date difference, date arithmetic, age calculator, pregnancy due date calculator, due date estimator',
-  // url: 'YOUR_WEBSITE_URL', // Optional: Add your site's URL
+  keywords: 'date calculator, date difference, date arithmetic, add days to a date, subtract days from a date, age calculator, pregnancy due date calculator, due date estimator',
+  url: 'https://date-calculator-boss.com/', // Optional: Add your site's URL
 };
 
 
