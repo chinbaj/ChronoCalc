@@ -444,7 +444,12 @@ export default function Home() {
             <div className="absolute top-2 left-2 z-10">
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="hover:bg-primary/10" aria-label="Navigation Menu"> {/* Removed border and border-primary */}
+                        <Button
+                           variant="ghost"
+                           size="icon"
+                           className="bg-primary text-primary-foreground hover:bg-warning hover:text-warning-foreground"
+                           aria-label="Navigation Menu"
+                        >
                             <Menu className="h-5 w-5" aria-hidden="true" />
                         </Button>
                     </DropdownMenuTrigger>
@@ -500,7 +505,7 @@ export default function Home() {
                                           date > new Date("2200-01-01") || date < new Date("1900-01-01"),
                                     }}
                                     placeholder="mm/dd/yyyy"
-                                    suppressHydrationWarning
+                                    suppressHydrationWarning // Keep hydration warning suppression
                                     aria-required="true" // Mark as required for accessibility
                                     id={`${field.name}-input`} // Add unique ID
                                     aria-label="Start Date" // Add specific label
@@ -525,7 +530,7 @@ export default function Home() {
                                             date < (dateDifferenceForm.getValues("startDate") || new Date("1900-01-01")) || date > new Date("2200-01-01"),
                                       }}
                                       placeholder="mm/dd/yyyy"
-                                      suppressHydrationWarning
+                                      suppressHydrationWarning // Keep hydration warning suppression
                                       aria-required="true" // Mark as required
                                       id={`${field.name}-input`} // Add unique ID
                                       aria-label="End Date" // Add specific label
@@ -583,7 +588,7 @@ export default function Home() {
                                             date < new Date("1900-01-01") || date > new Date("2200-01-01"),
                                       }}
                                       placeholder="mm/dd/yyyy"
-                                      suppressHydrationWarning
+                                      suppressHydrationWarning // Keep hydration warning suppression
                                       aria-required="true"
                                       id={`${field.name}-input`}
                                       aria-label="Base Date"
@@ -631,7 +636,7 @@ export default function Home() {
                                     value={field.value ?? ''}
                                     min="1"
                                     step="1"
-                                    suppressHydrationWarning
+                                    suppressHydrationWarning // Keep hydration warning suppression
                                     aria-required="true"
                                     id={`${field.name}-input`}
                                     aria-label="Number of Days"
@@ -698,7 +703,7 @@ export default function Home() {
                                    toYear: currentDate ? currentDate.getFullYear() : new Date().getFullYear(),
                                 }}
                                 placeholder="mm/dd/yyyy"
-                                suppressHydrationWarning
+                                suppressHydrationWarning // Keep hydration warning suppression
                                 aria-required="true"
                                 id={`${field.name}-input`}
                                 aria-label="Date of Birth"
@@ -848,7 +853,7 @@ export default function Home() {
                                    toYear: currentDate ? currentDate.getFullYear() : new Date().getFullYear(),
                                  }}
                                  placeholder="mm/dd/yyyy"
-                                 suppressHydrationWarning
+                                 suppressHydrationWarning // Keep hydration warning suppression
                                  aria-required="true"
                                  id={`${field.name}-input`}
                                  aria-label="First Day of Last Menstrual Period"
@@ -879,7 +884,7 @@ export default function Home() {
                                    toYear: currentDate ? currentDate.getFullYear() : new Date().getFullYear(),
                                  }}
                                  placeholder="mm/dd/yyyy"
-                                 suppressHydrationWarning
+                                 suppressHydrationWarning // Keep hydration warning suppression
                                  aria-required="true"
                                  id={`${field.name}-input`}
                                  aria-label="Estimated Conception Date"
@@ -911,7 +916,7 @@ export default function Home() {
                                        toYear: currentDate ? currentDate.getFullYear() : new Date().getFullYear(),
                                      }}
                                      placeholder="mm/dd/yyyy"
-                                     suppressHydrationWarning
+                                     suppressHydrationWarning // Keep hydration warning suppression
                                      aria-required="true"
                                      id={`${field.name}-input`}
                                      aria-label="IVF Date of Transfer"
