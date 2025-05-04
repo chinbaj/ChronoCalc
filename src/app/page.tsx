@@ -444,7 +444,7 @@ export default function Home() {
             <div className="absolute top-2 left-2 z-10">
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="border border-primary hover:bg-primary/10" aria-label="Navigation Menu">
+                        <Button variant="ghost" size="icon" className="hover:bg-primary/10" aria-label="Navigation Menu"> {/* Removed border and border-primary */}
                             <Menu className="h-5 w-5" aria-hidden="true" />
                         </Button>
                     </DropdownMenuTrigger>
@@ -985,3 +985,4 @@ export default function Home() {
     </main>
   );
 }
+
