@@ -69,6 +69,7 @@ import {
     AlertDescription,
     AlertTitle,
 } from "@/components/ui/alert";
+import { ThemeToggle } from "@/components/theme/theme-toggle"; // Import ThemeToggle
 
 // --- Schemas ---
 
@@ -440,14 +441,14 @@ export default function Home() {
         {/* Main Content Card - Wrapped with TooltipProvider */}
         <TooltipProvider>
           <Card className="w-full max-w-2xl shadow-lg flex-grow relative"> {/* Added relative positioning */}
-            {/* Navigation Dropdown */}
-            <div className="absolute top-2 left-2 z-10">
+            {/* Navigation Dropdown & Theme Toggle Container */}
+             <div className="absolute top-2 left-2 right-2 z-10 flex justify-between items-start">
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                         <Button
-                           variant="outline" // Change variant to outline
+                           variant="outline"
                            size="icon"
-                           className="bg-card text-primary border border-primary hover:bg-accent hover:text-accent-foreground hover:border-accent" // White bg, blue border, accent hover
+                           className="bg-card text-primary border border-primary hover:bg-accent hover:text-accent-foreground hover:border-accent"
                            aria-label="Navigation Menu"
                         >
                             <Menu className="h-5 w-5" aria-hidden="true" />
@@ -468,11 +469,15 @@ export default function Home() {
                         </DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>
+                <div className="absolute top-0 right-0"> {/* Position ThemeToggle top-right */}
+                    <ThemeToggle />
+                </div>
             </div>
 
-             <CardHeader className="text-center px-6 pt-6 pb-4">
+
+             <CardHeader className="text-center px-6 pt-12 pb-4"> {/* Increased pt for toggle */}
               {/* Changed to h1 for main page title */}
-              <CardTitle as="h1" className="text-2xl font-bold text-primary mt-6">
+              <CardTitle as="h1" className="text-2xl font-bold text-primary">
                 Date-Arithmetic Boss
               </CardTitle>
             </CardHeader>
@@ -982,4 +987,3 @@ export default function Home() {
     </main>
   );
 }
-
