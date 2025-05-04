@@ -445,9 +445,9 @@ export default function Home() {
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                         <Button
-                           variant="ghost"
+                           variant="outline" // Change variant to outline
                            size="icon"
-                           className="bg-primary text-primary-foreground hover:bg-warning hover:text-warning-foreground"
+                           className="bg-card text-primary border border-primary hover:bg-accent hover:text-accent-foreground hover:border-accent" // White bg, blue border, accent hover
                            aria-label="Navigation Menu"
                         >
                             <Menu className="h-5 w-5" aria-hidden="true" />
@@ -505,7 +505,6 @@ export default function Home() {
                                           date > new Date("2200-01-01") || date < new Date("1900-01-01"),
                                     }}
                                     placeholder="mm/dd/yyyy"
-                                    suppressHydrationWarning // Keep hydration warning suppression
                                     aria-required="true" // Mark as required for accessibility
                                     id={`${field.name}-input`} // Add unique ID
                                     aria-label="Start Date" // Add specific label
@@ -530,7 +529,6 @@ export default function Home() {
                                             date < (dateDifferenceForm.getValues("startDate") || new Date("1900-01-01")) || date > new Date("2200-01-01"),
                                       }}
                                       placeholder="mm/dd/yyyy"
-                                      suppressHydrationWarning // Keep hydration warning suppression
                                       aria-required="true" // Mark as required
                                       id={`${field.name}-input`} // Add unique ID
                                       aria-label="End Date" // Add specific label
@@ -588,7 +586,6 @@ export default function Home() {
                                             date < new Date("1900-01-01") || date > new Date("2200-01-01"),
                                       }}
                                       placeholder="mm/dd/yyyy"
-                                      suppressHydrationWarning // Keep hydration warning suppression
                                       aria-required="true"
                                       id={`${field.name}-input`}
                                       aria-label="Base Date"
@@ -607,7 +604,7 @@ export default function Home() {
                                <FormLabel>Operation</FormLabel>
                                <Select onValueChange={field.onChange} defaultValue={field.value} aria-required="true">
                                  <FormControl>
-                                   <SelectTrigger suppressHydrationWarning aria-label="Select Operation: Add or Subtract Days">
+                                   <SelectTrigger aria-label="Select Operation: Add or Subtract Days">
                                      <SelectValue placeholder="Select operation" />
                                    </SelectTrigger>
                                  </FormControl>
@@ -636,7 +633,6 @@ export default function Home() {
                                     value={field.value ?? ''}
                                     min="1"
                                     step="1"
-                                    suppressHydrationWarning // Keep hydration warning suppression
                                     aria-required="true"
                                     id={`${field.name}-input`}
                                     aria-label="Number of Days"
@@ -703,7 +699,6 @@ export default function Home() {
                                    toYear: currentDate ? currentDate.getFullYear() : new Date().getFullYear(),
                                 }}
                                 placeholder="mm/dd/yyyy"
-                                suppressHydrationWarning // Keep hydration warning suppression
                                 aria-required="true"
                                 id={`${field.name}-input`}
                                 aria-label="Date of Birth"
@@ -853,7 +848,6 @@ export default function Home() {
                                    toYear: currentDate ? currentDate.getFullYear() : new Date().getFullYear(),
                                  }}
                                  placeholder="mm/dd/yyyy"
-                                 suppressHydrationWarning // Keep hydration warning suppression
                                  aria-required="true"
                                  id={`${field.name}-input`}
                                  aria-label="First Day of Last Menstrual Period"
@@ -884,7 +878,6 @@ export default function Home() {
                                    toYear: currentDate ? currentDate.getFullYear() : new Date().getFullYear(),
                                  }}
                                  placeholder="mm/dd/yyyy"
-                                 suppressHydrationWarning // Keep hydration warning suppression
                                  aria-required="true"
                                  id={`${field.name}-input`}
                                  aria-label="Estimated Conception Date"
@@ -916,7 +909,6 @@ export default function Home() {
                                        toYear: currentDate ? currentDate.getFullYear() : new Date().getFullYear(),
                                      }}
                                      placeholder="mm/dd/yyyy"
-                                     suppressHydrationWarning // Keep hydration warning suppression
                                      aria-required="true"
                                      id={`${field.name}-input`}
                                      aria-label="IVF Date of Transfer"
@@ -934,7 +926,7 @@ export default function Home() {
                                  <FormLabel>Embryo Age at Transfer</FormLabel>
                                  <Select onValueChange={field.onChange} defaultValue={field.value} aria-required="true">
                                    <FormControl>
-                                     <SelectTrigger suppressHydrationWarning aria-label="Select Embryo Age at Transfer">
+                                     <SelectTrigger aria-label="Select Embryo Age at Transfer">
                                        <SelectValue placeholder="Select embryo age" />
                                      </SelectTrigger>
                                    </FormControl>
