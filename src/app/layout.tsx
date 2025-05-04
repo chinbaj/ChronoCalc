@@ -16,8 +16,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'Date-Arithmetic Boss: Calculator for Dates, Age & Pregnancy Due Dates',
-  description: 'Your go-to date calculator. Easily find the difference between two dates, add or subtract days, calculate age from date of birth, and estimate pregnancy due dates (LMP, Conception, IVF).',
+  title: 'Date-Arithmetic Boss: Date Calculator for Date Difference, Add or Subtract days to or From a date, Find Age, Due Dates, etc.',
+  description: 'Your go-to date calculator. Easily find the difference between two dates, add or subtract days from a date, calculate age from date of birth, and estimate pregnancy due dates (LMP, Conception, IVF).',
   keywords: 'date calculator, date difference, date arithmetic, add days to date, subtract days from date, age calculator, pregnancy due date calculator, due date estimator, LMP calculator, conception date calculator, IVF due date calculator, time calculator',
   authors: [{ name: 'Date-Arithmetic Boss Team' }], // Optional: Add author info
   // Open Graph / Facebook
